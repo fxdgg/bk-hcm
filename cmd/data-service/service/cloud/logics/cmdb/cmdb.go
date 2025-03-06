@@ -49,7 +49,7 @@ func AddCloudHostToBiz[T cvm.Extension](c *CmdbLogics, kt *kit.Kit, req *AddClou
 		return errf.Newf(errf.InvalidParameter, "vendor %s is invalid", req.Vendor)
 	}
 
-	hosts := make([]cmdb.Host, 0, len(req.Hosts))
+	hosts := make([]cmdb.HostCreateParam, 0, len(req.Hosts))
 	for _, host := range req.Hosts {
 		if host.Vendor != "" && req.Vendor != host.Vendor {
 			return errf.Newf(errf.InvalidParameter, "host vendor %s not match req vendor %s", host.Vendor, req.Vendor)
@@ -63,7 +63,7 @@ func AddCloudHostToBiz[T cvm.Extension](c *CmdbLogics, kt *kit.Kit, req *AddClou
 			status = "1"
 		}
 
-		hosts = append(hosts, cmdb.Host{
+		hosts = append(hosts, cmdb.HostCreateParam{
 			BkCloudVendor:     cmdb.HcmCmdbVendorMap[req.Vendor],
 			BkCloudInstID:     host.CloudID,
 			BkCloudHostStatus: status,
@@ -95,7 +95,7 @@ func AddBaseCloudHostToBiz(c *CmdbLogics, kt *kit.Kit, req *AddBaseCloudHostToBi
 		return err
 	}
 
-	hosts := make([]cmdb.Host, 0, len(req.Hosts))
+	hosts := make([]cmdb.HostCreateParam, 0, len(req.Hosts))
 	for _, host := range req.Hosts {
 		if err := host.Vendor.Validate(); err != nil {
 			return err
@@ -106,7 +106,7 @@ func AddBaseCloudHostToBiz(c *CmdbLogics, kt *kit.Kit, req *AddBaseCloudHostToBi
 			status = "1"
 		}
 
-		hosts = append(hosts, cmdb.Host{
+		hosts = append(hosts, cmdb.HostCreateParam{
 			BkCloudVendor:     cmdb.HcmCmdbVendorMap[host.Vendor],
 			BkCloudInstID:     host.CloudID,
 			BkCloudHostStatus: status,

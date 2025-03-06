@@ -147,6 +147,12 @@ func NewService(dis serviced.Discover) (*Service, error) {
 	}
 
 	cmdbCfg := cc.WebServer().Cmdb
+	cmdbCli, err := pkgcmdb.NewClient(&cmdbCfg, metrics.Register())
+	if err != nil {
+		return nil, err
+	}
+
+	cmdbCfg := cc.WebServer().Cmdb
 	cmdbCli, err := pkgcmdb.NewClient(&cmdbCfg, bkUserCli, metrics.Register())
 	if err != nil {
 		return nil, err

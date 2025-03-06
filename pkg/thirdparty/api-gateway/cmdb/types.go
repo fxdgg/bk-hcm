@@ -172,13 +172,32 @@ type BatchCreateResult struct {
 
 // AddCloudHostToBizParams is esb add cloud host to biz parameter.
 type AddCloudHostToBizParams struct {
-	BizID    int64  `json:"bk_biz_id" validate:"required"`
-	HostInfo []Host `json:"host_info" validate:"required,dive,min=1,max=200"`
+	BizID    int64             `json:"bk_biz_id" validate:"required"`
+	HostInfo []HostCreateParam `json:"host_info" validate:"required,min=1,max=200,dive"`
 }
 
 // Validate validate AddCloudHostToBizParams
 func (p *AddCloudHostToBizParams) Validate() error {
 	return validator.Validate.Struct(p)
+}
+
+// HostCreateParam is cmdb host create parameter.
+type HostCreateParam struct {
+	BkHostID          int64           `json:"bk_host_id"`
+	BkCloudVendor     CloudVendor     `json:"bk_cloud_vendor" validate:"required"`
+	BkCloudInstID     string          `json:"bk_cloud_inst_id" validate:"required"`
+	BkCloudHostStatus CloudHostStatus `json:"bk_cloud_host_status,omitempty"`
+	BkCloudID         int64           `json:"bk_cloud_id" validate:"required"`
+	// 云上地域，如 "ap-guangzhou"
+	BkCloudRegion   string  `json:"bk_cloud_region"`
+	BkHostInnerIP   string  `json:"bk_host_innerip" validate:"required"`
+	BkHostOuterIP   string  `json:"bk_host_outerip"`
+	BkHostInnerIPv6 string  `json:"bk_host_innerip_v6"`
+	BkHostOuterIPv6 string  `json:"bk_host_outerip_v6"`
+	Operator        string  `json:"operator"`
+	BkBakOperator   string  `json:"bk_bak_operator"`
+	BkHostName      string  `json:"bk_host_name"`
+	BkComment       *string `json:"bk_comment,omitempty"`
 }
 
 // DeleteCloudHostFromBizParams is esb delete cloud host from biz parameter.
