@@ -29,21 +29,12 @@ import (
 
 // ----------------------------- biz -----------------------------
 
-// SearchBizParams is esb search cmdb business parameter.
-type esbSearchBizParams struct {
-	*types.CommParams
-	*SearchBizParams
-}
-
 // SearchBizParams is cmdb search business parameter.
 type SearchBizParams struct {
 	Fields            []string     `json:"fields"`
 	Page              BasePage     `json:"page"`
 	BizPropertyFilter *QueryFilter `json:"biz_property_filter,omitempty"`
 }
-
-// BizIDField cmdb 业务字段
-const BizIDField = "bk_biz_id"
 
 // QueryFilter is cmdb common query filter.
 type QueryFilter struct {
@@ -139,12 +130,6 @@ type Biz struct {
 
 // -------------------------- cloud area --------------------------
 
-// SearchCloudAreaParams is esb search cmdb cloud area parameter.
-type esbSearchCloudAreaParams struct {
-	*types.CommParams
-	*SearchCloudAreaParams
-}
-
 // SearchCloudAreaParams is cmdb search cloud area parameter.
 type SearchCloudAreaParams struct {
 	Fields    []string               `json:"fields"`
@@ -185,12 +170,6 @@ type BatchCreateResult struct {
 
 // ----------------------------- host -----------------------------
 
-// esbAddCloudHostToBizParams is esb add cmdb cloud host to biz parameter.
-type esbAddCloudHostToBizParams struct {
-	*types.CommParams
-	*AddCloudHostToBizParams
-}
-
 // AddCloudHostToBizParams is esb add cloud host to biz parameter.
 type AddCloudHostToBizParams struct {
 	BizID    int64  `json:"bk_biz_id" validate:"required"`
@@ -202,12 +181,6 @@ func (p *AddCloudHostToBizParams) Validate() error {
 	return validator.Validate.Struct(p)
 }
 
-// esbDeleteCloudHostFromBizParams is esb delete cmdb cloud host from biz parameter.
-type esbDeleteCloudHostFromBizParams struct {
-	*types.CommParams
-	*DeleteCloudHostFromBizParams
-}
-
 // DeleteCloudHostFromBizParams is esb delete cloud host from biz parameter.
 type DeleteCloudHostFromBizParams struct {
 	BizID   int64   `json:"bk_biz_id" validate:"required"`
@@ -217,12 +190,6 @@ type DeleteCloudHostFromBizParams struct {
 // Validate validate DeleteCloudHostFromBizParams
 func (p *DeleteCloudHostFromBizParams) Validate() error {
 	return validator.Validate.Struct(p)
-}
-
-// esbListBizHostParams is esb list cmdb host in biz parameter.
-type esbListBizHostParams struct {
-	*types.CommParams
-	*ListBizHostParams
 }
 
 // ListBizHostParams is esb list cmdb host in biz parameter.
@@ -287,11 +254,6 @@ var HostFields = []string{
 	"bk_cloud_host_status",
 }
 
-type esbFindHostTopoRelationParams struct {
-	*types.CommParams
-	*FindHostTopoRelationParams
-}
-
 // FindHostTopoRelationParams cmdb find host topo request params
 type FindHostTopoRelationParams struct {
 	BizID       int64     `json:"bk_biz_id" validate:"required"`
@@ -304,11 +266,6 @@ type FindHostTopoRelationParams struct {
 // Validate validate FindHostTopoRelationParams
 func (p *FindHostTopoRelationParams) Validate() error {
 	return validator.Validate.Struct(p)
-}
-
-type findHostTopoRelationResp struct {
-	types.BaseResponse `json:",inline"`
-	Data               *HostTopoRelationResult `json:"data"`
 }
 
 // HostTopoRelationResult cmdb host topo relation result warp
@@ -327,11 +284,6 @@ type HostTopoRelation struct {
 	BkSupplierAccount string `json:"bk_supplier_account"`
 }
 
-type esbSearchModuleParams struct {
-	*types.CommParams
-	*SearchModuleParams
-}
-
 // SearchModuleParams cmdb module search parameter.
 type SearchModuleParams struct {
 	BizID             int64  `json:"bk_biz_id" validate:"required"`
@@ -346,12 +298,6 @@ type SearchModuleParams struct {
 // Validate validate SearchModuleParams
 func (s *SearchModuleParams) Validate() error {
 	return validator.Validate.Struct(s)
-}
-
-type searchModuleResp struct {
-	types.BaseResponse `json:",inline"`
-	Permission         interface{}       `json:"permission"`
-	Data               *ModuleInfoResult `json:"data"`
 }
 
 // ModuleInfoResult cmdb module info list result
@@ -535,7 +481,7 @@ func (p *WatchEventParams) Validate() error {
 
 // WatchEventFilter watch event filter
 type WatchEventFilter struct {
-	// SubResource the sub resource you want to watch, eg. object ID of the instance resource, watch all if not set
+	// SubResource the sub resource you want to watch, e.g. object ID of the instance resource, watch all if not set
 	SubResource string `json:"bk_sub_resource,omitempty"`
 }
 
@@ -566,4 +512,55 @@ type HostModuleRelationParams struct {
 // Validate validate HostModuleRelationParams
 func (p *HostModuleRelationParams) Validate() error {
 	return validator.Validate.Struct(p)
+}
+
+// GetBizBriefCacheTopoParams define get biz brief cache topo params.
+type GetBizBriefCacheTopoParams struct {
+	BkBizID int64 `json:"bk_biz_id" validate:"required"`
+}
+
+// Validate get biz brief cache topo params.
+func (p *GetBizBriefCacheTopoParams) Validate() error {
+	return validator.Validate.Struct(p)
+}
+
+// GetBizBriefCacheTopoResult define get biz brief cache topo result.
+type GetBizBriefCacheTopoResult struct {
+	// basic business info
+	Biz *BizBase `json:"biz"`
+	// the idle set nodes info
+	Idle []Node `json:"idle"`
+	// the other common nodes
+	Nodes []Node `json:"nds"`
+}
+
+// Node define node info.
+type Node struct {
+	// the object of this node, like set or module
+	Object string `json:"object_id"`
+	// the node's instance id, like set id or module id
+	ID int64 `json:"id"`
+	// the node's name, like set name or module name
+	Name string `json:"name"`
+	// only set, module has this field.
+	// describe what kind of set or module this node is.
+	// 0: normal module or set.
+	// >1: special set or module
+	Default *int `json:"type,omitempty"`
+	// the sub-nodes of current node
+	SubNodes []Node `json:"nds"`
+}
+
+// BizBase define biz base.
+type BizBase struct {
+	// business id
+	ID int64 `json:"id" bson:"bk_biz_id"`
+	// business name
+	Name string `json:"name" bson:"bk_biz_name"`
+	// describe it's a resource pool business or normal business.
+	// 0: normal business
+	// >0: special business, like resource pool business.
+	Default int `json:"type" bson:"default"`
+
+	OwnerID string `json:"bk_supplier_account" bson:"bk_supplier_account"`
 }
