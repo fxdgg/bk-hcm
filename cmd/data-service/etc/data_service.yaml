@@ -153,15 +153,15 @@ cmdb:
   endpoints:
     - http://demo.com
   # appCode is the BlueKing app code of hcm to request cmdb api gateway.
-  appCode: test
+  appCode:
   # appSecret is the BlueKing app secret of hcm to request cmdb api gateway.
-  appSecret: xxxxxxxxx
+  appSecret:
   # user is the BlueKing user of hcm to request cmdb api gateway.
-  user: test
+  user: admin
   # bkTicket is the BlueKing access ticket of hcm to request cmdb api gateway.
   bkTicket:
   # bkToken is the BlueKing access token of hcm to request cmdb api gateway.
-  bkToken: xxxxxxxxx
+  bkToken:
   # defines tls related options.
   tls:
     # server should be accessed without verifying the TLS certificate.
