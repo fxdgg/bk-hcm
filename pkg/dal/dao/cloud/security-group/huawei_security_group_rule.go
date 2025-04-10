@@ -80,8 +80,8 @@ func (dao *HuaWeiSGRuleDao) BatchCreateWithTx(kt *kit.Kit, tx *sqlx.Tx, rules []
 
 	sql := fmt.Sprintf(`INSERT INTO %s (%s)	VALUES(%s)`, table.HuaWeiSecurityGroupRuleTable,
 		cloud.HuaWeiSGRuleColumns.ColumnExpr(), cloud.HuaWeiSGRuleColumns.ColonNameExpr())
-
-	if err = dao.Orm.Txn(tx).BulkInsert(kt.Ctx, sql, rules); err != nil {
+	err = dao.Orm.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Txn(tx).BulkInsert(kt.Ctx, sql, rules)
+	if err != nil {
 		logs.Errorf("insert %s failed, err: %v, rid: %s", table.HuaWeiSecurityGroupRuleTable, err, kt.Rid)
 		return nil, fmt.Errorf("insert %s failed, err: %v", table.HuaWeiSecurityGroupRuleTable, err)
 	}
@@ -174,7 +174,8 @@ func (dao *HuaWeiSGRuleDao) UpdateWithTx(kt *kit.Kit, tx *sqlx.Tx, expr *filter.
 
 	sql := fmt.Sprintf(`UPDATE %s %s %s`, rule.TableName(), setExpr, whereExpr)
 
-	effected, err := dao.Orm.Txn(tx).Update(kt.Ctx, sql, tools.MapMerge(toUpdate, whereValue))
+	effected, err := dao.Orm.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Txn(tx).Update(
+		kt.Ctx, sql, tools.MapMerge(toUpdate, whereValue))
 	if err != nil {
 		logs.ErrorJson("update huawei security group rule failed, err: %v, filter: %s, rid: %v", err, expr, kt.Rid)
 		return err
@@ -221,7 +222,7 @@ func (dao *HuaWeiSGRuleDao) List(kt *kit.Kit, opt *types.SGRuleListOption) (*typ
 		// this is a count request, then do count operation only.
 		sql := fmt.Sprintf(`SELECT COUNT(*) FROM %s %s`, table.HuaWeiSecurityGroupRuleTable, whereExpr)
 
-		count, err := dao.Orm.Do().Count(kt.Ctx, sql, whereValue)
+		count, err := dao.Orm.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Do().Count(kt.Ctx, sql, whereValue)
 		if err != nil {
 			logs.ErrorJson("count huawei security group rule failed, err: %v, filter: %s, rid: %s", err,
 				opt.Filter, kt.Rid)
@@ -240,7 +241,8 @@ func (dao *HuaWeiSGRuleDao) List(kt *kit.Kit, opt *types.SGRuleListOption) (*typ
 		table.HuaWeiSecurityGroupRuleTable, whereExpr, pageExpr)
 
 	details := make([]cloud.HuaWeiSecurityGroupRuleTable, 0)
-	if err = dao.Orm.Do().Select(kt.Ctx, &details, sql, whereValue); err != nil {
+	err = dao.Orm.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Do().Select(kt.Ctx, &details, sql, whereValue)
+	if err != nil {
 		return nil, err
 	}
 
@@ -261,7 +263,8 @@ func (dao *HuaWeiSGRuleDao) Delete(kt *kit.Kit, expr *filter.Expression) error {
 	sql := fmt.Sprintf(`DELETE FROM %s %s`, table.HuaWeiSecurityGroupRuleTable, whereExpr)
 
 	_, err = dao.Orm.AutoTxn(kt, func(txn *sqlx.Tx, opt *orm.TxnOption) (interface{}, error) {
-		if _, err = dao.Orm.Txn(txn).Delete(kt.Ctx, sql, whereValue); err != nil {
+		_, err = dao.Orm.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Txn(txn).Delete(kt.Ctx, sql, whereValue)
+		if err != nil {
 			logs.ErrorJson("delete huawei security group rule failed, err: %v, filter: %s, rid: %s", err, expr, kt.Rid)
 			return nil, err
 		}
@@ -287,8 +290,8 @@ func (dao *HuaWeiSGRuleDao) DeleteWithTx(kt *kit.Kit, tx *sqlx.Tx, expr *filter.
 	}
 
 	sql := fmt.Sprintf(`DELETE FROM %s %s`, table.HuaWeiSecurityGroupRuleTable, whereExpr)
-
-	if _, err = dao.Orm.Txn(tx).Delete(kt.Ctx, sql, whereValue); err != nil {
+	_, err = dao.Orm.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Txn(tx).Delete(kt.Ctx, sql, whereValue)
+	if err != nil {
 		logs.ErrorJson("delete huawei security group rule failed, err: %v, filter: %s, rid: %s", err, expr, kt.Rid)
 		return err
 	}
