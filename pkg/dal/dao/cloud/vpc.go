@@ -256,7 +256,8 @@ func ListVpc(kt *kit.Kit, ormi orm.Interface, ids []string) (map[string]cloud.Vp
 	sql := fmt.Sprintf(`SELECT %s FROM %s where id in (:ids)`, cloud.VpcColumns.FieldsNamedExpr(nil), table.VpcTable)
 
 	vpcs := make([]cloud.VpcTable, 0)
-	if err := ormi.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Do().Select(kt.Ctx, &vpcs, sql, map[string]interface{}{"ids": ids}); err != nil {
+	if err := ormi.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Do().Select(
+		kt.Ctx, &vpcs, sql, map[string]interface{}{"ids": ids}); err != nil {
 		return nil, err
 	}
 
