@@ -30,7 +30,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// Client is an esb client to request cmdb.
+// Client is an api-gateway client to request cmdb.
 type Client interface {
 	SearchBusiness(kt *kit.Kit, params *SearchBizParams) (*SearchBizResult, error)
 	SearchCloudArea(kt *kit.Kit, params *SearchCloudAreaParams) (*SearchCloudAreaResult, error)

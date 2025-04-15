@@ -53,7 +53,6 @@ import (
 	"hcm/pkg/runtime/shutdown"
 	"hcm/pkg/serviced"
 	"hcm/pkg/thirdparty/api-gateway/cmdb"
-	"hcm/pkg/thirdparty/esb"
 	"hcm/pkg/tools/ssl"
 
 	"github.com/emicklei/go-restful/v3"
@@ -66,7 +65,6 @@ type Service struct {
 	authorizer  auth.Authorizer
 	audit       logicaudit.Interface
 	billManager *bill.BillManager
-	esbClient   esb.Client
 	cmdbClient  cmdb.Client
 }
 
