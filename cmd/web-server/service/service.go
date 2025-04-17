@@ -56,6 +56,7 @@ import (
 	"hcm/pkg/serviced"
 	pkgcmdb "hcm/pkg/thirdparty/api-gateway/cmdb"
 	pkgitsm "hcm/pkg/thirdparty/api-gateway/itsm"
+	"hcm/pkg/thirdparty/api-gateway/login"
 	pkgnotice "hcm/pkg/thirdparty/api-gateway/notice"
 	"hcm/pkg/thirdparty/esb"
 	"hcm/pkg/tools/ssl"
@@ -79,6 +80,8 @@ type Service struct {
 	// noticeCli notification center client
 	noticeCli pkgnotice.Client
 	cmdbCli   pkgcmdb.Client
+	// loginCli login client.
+	loginCli login.Client
 }
 
 // NewService create a service instance.
@@ -141,6 +144,12 @@ func NewService(dis serviced.Discover) (*Service, error) {
 		return nil, err
 	}
 
+	loginCfg := cc.WebServer().Login
+	loginCli, err := login.NewClient(&loginCfg, metrics.Register())
+	if err != nil {
+		return nil, err
+	}
+
 	return &Service{
 		client:     apiClientSet,
 		esbClient:  esbClient,
@@ -149,6 +158,7 @@ func NewService(dis serviced.Discover) (*Service, error) {
 		itsmCli:    itsmCli,
 		noticeCli:  noticeCli,
 		cmdbCli:    cmdbCli,
+		loginCli:   loginCli,
 	}, nil
 }
 
@@ -261,16 +271,18 @@ func (s *Service) apiSet() *restful.WebService {
 	ws.Filter(NewCompleteRequestIDFilter())
 	// Note: 所有API接口都需要经过用户认证
 	ws.Path("/api/v1/web").Filter(
-		NewUserAuthenticateFilter(s.esbClient, cc.WebServer().Web.BkLoginUrl, cc.WebServer().Web.BkLoginCookieName),
+		NewUserAuthenticateFilter(s.loginCli, cc.WebServer().Web.BkLoginUrl, cc.WebServer().Web.BkLoginCookieName),
 	)
 
 	c := &capability.Capability{
 		WebService: ws,
 		ApiClient:  s.client,
+		EsbClient:  s.esbClient,
 		Authorizer: s.authorizer,
 		ItsmCli:    s.itsmCli,
 		NoticeCli:  s.noticeCli,
 		CmdbCli:    s.cmdbCli,
+		LoginCli:   s.loginCli,
 	}
 
 	user.InitUserService(c)
@@ -296,7 +308,7 @@ func (s *Service) proxyApiSet(apiPath string) *restful.WebService {
 	ws.Filter(NewCompleteRequestIDFilter())
 	// Note: 所有API接口都需要经过用户认证
 	ws.Path(apiPath).Filter(
-		NewUserAuthenticateFilter(s.esbClient, cc.WebServer().Web.BkLoginUrl, cc.WebServer().Web.BkLoginCookieName),
+		NewUserAuthenticateFilter(s.loginCli, cc.WebServer().Web.BkLoginUrl, cc.WebServer().Web.BkLoginCookieName),
 	)
 	ws.Route(ws.GET("{.*}").To(s.proxy.Do))
 	ws.Route(ws.POST("{.*}").To(s.proxy.Do))
@@ -365,6 +377,7 @@ func (s *Service) indexHandleFunc(req *restful.Request, resp *restful.Response) 
 		"ENABLE_CLOUD_SELECTION":      cc.WebServer().Web.EnableCloudSelection,
 		"ENABLE_ACCOUNT_BILL":         cc.WebServer().Web.EnableAccountBill,
 		"ENABLE_NOTICE":               cc.WebServer().Notice.Enable,
+		"USER_MANAGE_URL":             cc.WebServer().Web.BkUserManageUrl,
 	}
 	err = tmpl.Execute(resp.ResponseWriter, content)
 	if err != nil {

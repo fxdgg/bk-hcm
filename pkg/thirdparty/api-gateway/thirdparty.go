@@ -75,7 +75,7 @@ type ApiGatewayResp[T any] struct {
 func ApiGatewayCall[IT any, OT any](cli rest.ClientInterface, cfg *cc.ApiGateway,
 	method rest.VerbType, kt *kit.Kit, req *IT, url string, urlParams ...any) (*OT, error) {
 
-	header := getCommonHeader(kt, cfg)
+	header := GetCommonHeader(kt, cfg)
 	resp := new(ApiGatewayResp[*OT])
 	err := cli.Verb(method).
 		SubResourcef(url, urlParams...).
@@ -102,7 +102,7 @@ func ApiGatewayCall[IT any, OT any](cli rest.ClientInterface, cfg *cc.ApiGateway
 func ApiGatewayCallWithoutReq[OT any](cli rest.ClientInterface, cfg *cc.ApiGateway,
 	method rest.VerbType, kt *kit.Kit, params map[string]string, url string, urlParams ...any) (*OT, error) {
 
-	header := getCommonHeader(kt, cfg)
+	header := GetCommonHeader(kt, cfg)
 	resp := new(ApiGatewayResp[*OT])
 	err := cli.Verb(method).
 		SubResourcef(url, urlParams...).
@@ -125,7 +125,8 @@ func ApiGatewayCallWithoutReq[OT any](cli rest.ClientInterface, cfg *cc.ApiGatew
 	return resp.Data, nil
 }
 
-func getCommonHeader(kt *kit.Kit, cfg *cc.ApiGateway) http.Header {
+// GetCommonHeader get common header
+func GetCommonHeader(kt *kit.Kit, cfg *cc.ApiGateway) http.Header {
 	header := kt.Header()
 	// 如果配置了指定用户，使用指定用户调用
 	user := kt.User

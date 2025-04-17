@@ -22,14 +22,23 @@ package user
 
 import (
 	"hcm/cmd/web-server/service/capability"
+	"hcm/pkg/cc"
 	"hcm/pkg/client"
+	"hcm/pkg/criteria/constant"
 	"hcm/pkg/rest"
+	"hcm/pkg/thirdparty/api-gateway/login"
 )
 
 // InitUserService initial the userSvc service
 func InitUserService(c *capability.Capability) {
+	bkLoginCookieName := cc.WebServer().Web.BkLoginCookieName
+	if bkLoginCookieName == "" {
+		bkLoginCookieName = constant.BKToken
+	}
 	svr := &userSvc{
-		client: c.ApiClient,
+		client:            c.ApiClient,
+		loginCli:          c.LoginCli,
+		bkLoginCookieName: bkLoginCookieName,
 	}
 
 	h := rest.NewHandler()
@@ -39,10 +48,18 @@ func InitUserService(c *capability.Capability) {
 }
 
 type userSvc struct {
-	client *client.ClientSet
+	client            *client.ClientSet
+	loginCli          login.Client
+	bkLoginCookieName string
 }
 
 // GetUser get user info
 func (u *userSvc) GetUser(cts *rest.Contexts) (interface{}, error) {
-	return map[string]string{"username": cts.Kit.User}, nil
+	cookie, err := cts.Request.Request.Cookie(u.bkLoginCookieName)
+	if err != nil {
+		return nil, err
+	}
+	// todo 待dao层的代码改造合入后，需要调整这个逻辑，如果开启多租户，那么设置租户id为system，不开启则设置为default
+	cts.Kit.TenantID = "system"
+	return u.loginCli.GetUserByToken(cts.Kit, cookie.Value)
 }

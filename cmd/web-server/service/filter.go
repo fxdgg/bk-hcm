@@ -27,12 +27,13 @@ import (
 	"regexp"
 	"strings"
 
+	"hcm/pkg/api/core"
 	"hcm/pkg/criteria/constant"
 	"hcm/pkg/criteria/errf"
 	"hcm/pkg/kit"
 	"hcm/pkg/logs"
 	"hcm/pkg/rest"
-	"hcm/pkg/thirdparty/esb"
+	"hcm/pkg/thirdparty/api-gateway/login"
 	"hcm/pkg/tools/uuid"
 
 	"github.com/emicklei/go-restful/v3"
@@ -55,7 +56,7 @@ func isITSMCallbackRequest(req *restful.Request) bool {
 	return false
 }
 
-func newCheckLogin(esbClient esb.Client, bkLoginUrl, bkLoginCookieName string) func(
+func newCheckLogin(loginCli login.Client, bkLoginUrl, bkLoginCookieName string) func(
 	*restful.Request) (*rest.Response, error) {
 
 	if bkLoginCookieName == "bk_ticket" {
@@ -83,7 +84,7 @@ func newCheckLogin(esbClient esb.Client, bkLoginUrl, bkLoginCookieName string) f
 	}
 
 	// 默认只能是bk_token,不支持其他的
-	bkLoginCookieName = "bk_token"
+	bkLoginCookieName = constant.BKToken
 
 	return func(req *restful.Request) (*rest.Response, error) {
 		// 获取cookie
@@ -93,24 +94,26 @@ func newCheckLogin(esbClient esb.Client, bkLoginUrl, bkLoginCookieName string) f
 			return nil, fmt.Errorf("%s cookie don't exists", bkLoginCookieName)
 		}
 		// 校验bk_token是否有效
-		resp, err := esbClient.Login().IsLogin(req.Request.Context(), cookie.Value)
+		kt := core.NewBackendKit()
+		// todo 待dao层的代码改造合入后，需要调整这个逻辑，如果开启多租户，那么设置租户id为system，不开启则设置为default
+		kt.TenantID = "system"
+		resp, err := loginCli.VerifyToken(kt, cookie.Value)
 		if err != nil {
+			logs.Errorf("verify token failed, err: %v, cookie value: %s, rid: %s", err, cookie.Value, kt.Rid)
 			return nil, err
 		}
 		return &rest.Response{
-			Code:    int32(resp.Code),
-			Message: resp.Message,
 			Data: loginVerifyRespData{
-				UserName: resp.Data.Username,
+				UserName: resp.Username,
 			},
 		}, nil
 	}
 }
 
 // NewUserAuthenticateFilter ...
-func NewUserAuthenticateFilter(esbClient esb.Client, bkLoginUrl, bkLoginCookieName string) restful.FilterFunction {
+func NewUserAuthenticateFilter(loginCli login.Client, bkLoginUrl, bkLoginCookieName string) restful.FilterFunction {
 
-	checkLogin := newCheckLogin(esbClient, bkLoginUrl, bkLoginCookieName)
+	checkLogin := newCheckLogin(loginCli, bkLoginUrl, bkLoginCookieName)
 
 	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 		var err error

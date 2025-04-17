@@ -344,6 +344,7 @@ type WebServerSetting struct {
 	TemplatePath  string        `yaml:"templatePath"`
 	Cmdb          ApiGateway    `yaml:"cmdb"`
 	Tenant        TenantConfig  `yaml:"tenant"`
+	Login         ApiGateway    `yaml:"login"`
 }
 
 // trySetFlagBindIP try set flag bind ip.
@@ -392,6 +393,10 @@ func (s WebServerSetting) Validate() error {
 	}
 
 	if err := s.Notice.validate(); err != nil {
+		return err
+	}
+
+	if err := s.Login.validate(); err != nil {
 		return err
 	}
 

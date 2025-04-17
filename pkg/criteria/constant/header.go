@@ -51,4 +51,6 @@ const (
 const (
 	// BKHTTPCookieLanguageKey ...
 	BKHTTPCookieLanguageKey = "blueking_language"
+	// BKToken ...
+	BKToken = "bk_token"
 )
