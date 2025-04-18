@@ -389,7 +389,7 @@ func (t tableShardingOrm) AutoTxn(kt *kit.Kit, run TxnFunc) (interface{}, error)
 func (t tableShardingOrm) TableSharding(opts ...TableShardingOpt) Interface {
 	return &tableShardingOrm{
 		orm:               t,
-		tableShardingOpts: append(t.tableShardingOpts, opts...),
+		tableShardingOpts: opts,
 	}
 }
 
@@ -547,7 +547,7 @@ func (t modifySQLOrm) TableSharding(opts ...TableShardingOpt) Interface {
 func (t modifySQLOrm) ModifySQLOpts(opts ...ModifySQLOpt) Interface {
 	return &modifySQLOrm{
 		orm:           t,
-		modifySQLOpts: append(t.modifySQLOpts, opts...),
+		modifySQLOpts: opts,
 	}
 }
 
