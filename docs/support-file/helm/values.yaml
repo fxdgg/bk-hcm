@@ -89,6 +89,8 @@ apiserver:
   port: 80
 
 authserver:
+  ## 鉴权开关
+  authDisabled: false
   ## 镜像
   ##
   image:
@@ -916,6 +918,7 @@ cmdbApiGateway:
     caFile:
     # the password to decrypt the certificate.
     password:
+
 # 多租户开关
 tenant:
   enabled: false
