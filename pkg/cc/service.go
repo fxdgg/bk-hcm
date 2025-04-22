@@ -125,6 +125,7 @@ type CloudServerSetting struct {
 	Itsm           ApiGateway     `yaml:"itsm"`
 	CloudSelection CloudSelection `yaml:"cloudSelection"`
 	Cmsi           CMSI           `yaml:"cmsi"`
+	Cmdb           ApiGateway     `yaml:"cmdb"`
 	Tenant         TenantConfig   `yaml:"tenant"`
 }
 
@@ -160,6 +161,10 @@ func (s CloudServerSetting) Validate() error {
 		return err
 	}
 
+	if err := s.Cmdb.validate(); err != nil {
+		return err
+	}
+
 	if s.BkHcmUrl == "" {
 		return fmt.Errorf("bkHcmUrl should not be empty")
 	}
@@ -191,7 +196,7 @@ type DataServiceSetting struct {
 	Database    DataBase     `yaml:"database"`
 	Objectstore ObjectStore  `yaml:"objectstore"`
 	Crypto      Crypto       `yaml:"crypto"`
-	Esb         Esb          `yaml:"esb"`
+	Cmdb        ApiGateway          `yaml:"cmdb"`
 	Tenant      TenantConfig `yaml:"tenant"`
 }
 
@@ -228,7 +233,7 @@ func (s DataServiceSetting) Validate() error {
 		return err
 	}
 
-	if err := s.Esb.validate(); err != nil {
+	if err := s.Cmdb.validate(); err != nil {
 		return err
 	}
 
@@ -282,6 +287,7 @@ type AuthServerSetting struct {
 	Log     LogOption    `yaml:"log"`
 	Esb     Esb          `yaml:"esb"`
 	Tenant  TenantConfig `yaml:"tenant"`
+	Cmdb    ApiGateway `yaml:"cmdb"`
 
 	IAM IAM `yaml:"iam"`
 }
@@ -314,6 +320,10 @@ func (s AuthServerSetting) Validate() error {
 		return err
 	}
 
+	if err := s.Cmdb.validate(); err != nil {
+		return err
+	}
+
 	if err := s.IAM.validate(); err != nil {
 		return err
 	}
@@ -332,6 +342,7 @@ type WebServerSetting struct {
 	ChangeLogPath ChangeLogPath `yaml:"changeLogPath"`
 	Notice        Notice        `yaml:"notice"`
 	TemplatePath  string        `yaml:"templatePath"`
+	Cmdb          ApiGateway    `yaml:"cmdb"`
 	Tenant        TenantConfig  `yaml:"tenant"`
 }
 
@@ -369,6 +380,10 @@ func (s WebServerSetting) Validate() error {
 	}
 
 	if err := s.Esb.validate(); err != nil {
+		return err
+	}
+
+	if err := s.Cmdb.validate(); err != nil {
 		return err
 	}
 
@@ -440,8 +455,8 @@ type AccountServerSetting struct {
 	Controller     BillControllerOption `yaml:"controller"`
 	Log            LogOption            `yaml:"log"`
 	BillAllocation BillAllocationOption `yaml:"billAllocation"`
-	Esb            Esb                  `yaml:"esb"`
 	TmpFileDir     string               `yaml:"tmpFileDir"`
+	Cmdb           ApiGateway           `yaml:"cmdb"`
 	Tenant         TenantConfig         `yaml:"tenant"`
 }
 
@@ -473,6 +488,10 @@ func (s AccountServerSetting) Validate() error {
 	}
 
 	if err := s.BillAllocation.validate(); err != nil {
+		return err
+	}
+
+	if err := s.Cmdb.validate(); err != nil {
 		return err
 	}
 

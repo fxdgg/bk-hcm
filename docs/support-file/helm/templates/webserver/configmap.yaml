@@ -58,5 +58,7 @@ data:
     notice:
       {{- toYaml .Values.webserver.notice | nindent 6 }}
     templatePath: {{ .Values.webserver.templatePath }}
+    cmdb:
+      {{- toYaml .Values.cmdbApiGateway | nindent 6 }}
     tenant:
       {{- toYaml .Values.tenant | nindent 6 }}

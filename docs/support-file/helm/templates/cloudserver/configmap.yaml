@@ -48,5 +48,7 @@ data:
       {{- toYaml .Values.cmsi | nindent 6 }}
     cloudSelection:
       {{- toYaml .Values.cloudserver.cloudSelection | nindent 6 }}
+    cmdb:
+      {{- toYaml .Values.cmdbApiGateway | nindent 6 }}
     tenant:
       {{- toYaml .Values.tenant | nindent 6 }}
