@@ -277,7 +277,6 @@ func (s *Service) apiSet() *restful.WebService {
 	c := &capability.Capability{
 		WebService: ws,
 		ApiClient:  s.client,
-		EsbClient:  s.esbClient,
 		Authorizer: s.authorizer,
 		ItsmCli:    s.itsmCli,
 		NoticeCli:  s.noticeCli,

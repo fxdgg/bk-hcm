@@ -35,7 +35,6 @@ import (
 type Capability struct {
 	WebService *restful.WebService
 	ApiClient  *client.ClientSet
-	EsbClient  esb.Client
 	Authorizer auth.Authorizer
 	ItsmCli    itsm.Client
 	NoticeCli  notice.Client
