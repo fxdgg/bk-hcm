@@ -470,6 +470,7 @@ type AccountServerSetting struct {
 	BillAllocation BillAllocationOption `yaml:"billAllocation"`
 	TmpFileDir     string               `yaml:"tmpFileDir"`
 	Cmdb           ApiGateway           `yaml:"cmdb"`
+	BkUser         ApiGateway           `yaml:"bkUser"`
 	Tenant         TenantConfig         `yaml:"tenant"`
 }
 
