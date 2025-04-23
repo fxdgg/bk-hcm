@@ -138,5 +138,6 @@ func GetCommonHeader(kt *kit.Kit, cfg *cc.ApiGateway) http.Header {
 		cfg.AppCode, cfg.AppSecret, user)
 	header.Set(constant.BKGWAuthKey, bkAuth)
 	header.Set(constant.RidKey, kt.Rid)
+	header.Set(constant.TenantIDKey, kt.TenantID)
 	return header
 }

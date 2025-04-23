@@ -60,6 +60,10 @@ func (u *userSvc) GetUser(cts *rest.Contexts) (interface{}, error) {
 		return nil, err
 	}
 	// todo 待dao层的代码改造合入后，需要调整这个逻辑，如果开启多租户，那么设置租户id为system，不开启则设置为default
-	cts.Kit.TenantID = "system"
+	if cc.WebServer().Tenant.Enabled {
+		cts.Kit.TenantID = constant.SystemTenantID
+	} else {
+		cts.Kit.TenantID = constant.DefaultTenantID
+	}
 	return u.loginCli.GetUserByToken(cts.Kit, cookie.Value)
 }
