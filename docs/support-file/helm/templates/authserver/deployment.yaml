@@ -49,7 +49,7 @@ spec:
             - --bind-ip=$(POD_IP)
             - --config-file=/data/hcm/etc/config.yaml
             {{- if .Values.authserver.authDisabled -}}
-            - --disable-auth
+             --disable-auth
             {{- end }}
 
           livenessProbe:
