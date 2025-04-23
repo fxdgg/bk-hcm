@@ -47,7 +47,7 @@ spec:
           command:
             - /data/hcm/bk-hcm-authserver
             - --bind-ip=$(POD_IP)
-            - --config-file=/data/hcm/etc/config.yaml 
+            - --config-file=/data/hcm/etc/config.yaml
             {{- if .Values.authserver.authDisabled -}}
                --disable-auth
             {{- end }}
