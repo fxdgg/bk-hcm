@@ -126,6 +126,7 @@ type CloudServerSetting struct {
 	CloudSelection CloudSelection `yaml:"cloudSelection"`
 	Cmsi           CMSI           `yaml:"cmsi"`
 	Cmdb           ApiGateway     `yaml:"cmdb"`
+	BkUser         ApiGateway     `yaml:"bkUser"`
 	Tenant         TenantConfig   `yaml:"tenant"`
 }
 
@@ -196,7 +197,8 @@ type DataServiceSetting struct {
 	Database    DataBase     `yaml:"database"`
 	Objectstore ObjectStore  `yaml:"objectstore"`
 	Crypto      Crypto       `yaml:"crypto"`
-	Cmdb        ApiGateway          `yaml:"cmdb"`
+	Cmdb        ApiGateway   `yaml:"cmdb"`
+	BkUser      ApiGateway   `yaml:"bkUser"`
 	Tenant      TenantConfig `yaml:"tenant"`
 }
 
@@ -287,7 +289,8 @@ type AuthServerSetting struct {
 	Log     LogOption    `yaml:"log"`
 	Esb     Esb          `yaml:"esb"`
 	Tenant  TenantConfig `yaml:"tenant"`
-	Cmdb    ApiGateway `yaml:"cmdb"`
+	Cmdb    ApiGateway   `yaml:"cmdb"`
+	BkUser  ApiGateway   `yaml:"bkUser"`
 
 	IAM IAM `yaml:"iam"`
 }
@@ -343,6 +346,7 @@ type WebServerSetting struct {
 	Notice        Notice        `yaml:"notice"`
 	TemplatePath  string        `yaml:"templatePath"`
 	Cmdb          ApiGateway    `yaml:"cmdb"`
+	BkUser        ApiGateway    `yaml:"bkUser"`
 	Tenant        TenantConfig  `yaml:"tenant"`
 	Login         ApiGateway    `yaml:"login"`
 }
@@ -385,6 +389,10 @@ func (s WebServerSetting) Validate() error {
 	}
 
 	if err := s.Cmdb.validate(); err != nil {
+		return err
+	}
+
+	if err := s.BkUser.validate(); err != nil {
 		return err
 	}
 

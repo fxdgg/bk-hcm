@@ -21,44 +21,20 @@ package apigateway
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	"hcm/pkg/cc"
 	"hcm/pkg/criteria/constant"
 	"hcm/pkg/kit"
 	"hcm/pkg/logs"
 	"hcm/pkg/rest"
+	"hcm/pkg/thirdparty/api-gateway/bkuser"
 )
-
-// Discovery used to third-party service discovery.
-type Discovery struct {
-	Name    string
-	Servers []string
-	index   int
-	sync.Mutex
-}
 
 // BaseResponse is esb http base response.
 type BaseResponse struct {
 	Result  bool   `json:"result"`
 	Code    int    `json:"code"`
 	Message string `json:"message"`
-}
-
-// GetServers get third-party service server host.
-func (d *Discovery) GetServers() ([]string, error) {
-	d.Lock()
-	defer d.Unlock()
-	num := len(d.Servers)
-	if num == 0 {
-		return []string{}, fmt.Errorf("there is no %s server can be used", d.Name)
-	}
-	if d.index < num-1 {
-		d.index = d.index + 1
-		return append(d.Servers[d.index-1:], d.Servers[:d.index-1]...), nil
-	}
-	d.index = 0
-	return append(d.Servers[num-1:], d.Servers[:num-1]...), nil
 }
 
 // ApiGatewayResp ...
@@ -72,10 +48,10 @@ type ApiGatewayResp[T any] struct {
 }
 
 // ApiGatewayCall general call helper function for api gateway
-func ApiGatewayCall[IT any, OT any](cli rest.ClientInterface, cfg *cc.ApiGateway,
+func ApiGatewayCall[IT any, OT any](cli rest.ClientInterface, bkUserCli bkuser.Client, cfg *cc.ApiGateway,
 	method rest.VerbType, kt *kit.Kit, req *IT, url string, urlParams ...any) (*OT, error) {
 
-	header := GetCommonHeader(kt, cfg)
+	header := GetCommonHeader(kt, bkUserCli, cfg)
 	resp := new(ApiGatewayResp[*OT])
 	err := cli.Verb(method).
 		SubResourcef(url, urlParams...).
@@ -99,10 +75,10 @@ func ApiGatewayCall[IT any, OT any](cli rest.ClientInterface, cfg *cc.ApiGateway
 }
 
 // ApiGatewayCallWithoutReq general call helper function for api gateway
-func ApiGatewayCallWithoutReq[OT any](cli rest.ClientInterface, cfg *cc.ApiGateway,
+func ApiGatewayCallWithoutReq[OT any](cli rest.ClientInterface, bkUserCli bkuser.Client, cfg *cc.ApiGateway,
 	method rest.VerbType, kt *kit.Kit, params map[string]string, url string, urlParams ...any) (*OT, error) {
 
-	header := GetCommonHeader(kt, cfg)
+	header := GetCommonHeader(kt, bkUserCli, cfg)
 	resp := new(ApiGatewayResp[*OT])
 	err := cli.Verb(method).
 		SubResourcef(url, urlParams...).
@@ -126,12 +102,20 @@ func ApiGatewayCallWithoutReq[OT any](cli rest.ClientInterface, cfg *cc.ApiGatew
 }
 
 // GetCommonHeader get common header
-func GetCommonHeader(kt *kit.Kit, cfg *cc.ApiGateway) http.Header {
+func GetCommonHeader(kt *kit.Kit, bkUserCli bkuser.Client, cfg *cc.ApiGateway) http.Header {
 	header := kt.Header()
 	// 如果配置了指定用户，使用指定用户调用
 	user := kt.User
 	if len(cfg.User) > 0 {
-		user = cfg.User
+		// TODO 多租户特有，单独提PR
+		// 通过用户管理获取指定用户的bk_username
+		// TODO 缓存
+		username, err := getBkUsername(kt, bkUserCli, cfg.User)
+		if err != nil {
+			logs.Warnf("fail to get bk_username by user, err: %v, user: %s, rid: %s", err, user, kt.Rid)
+			return header
+		}
+		user = username
 	}
 	// TODO: 目前调用方式和itsm 不同，后期改成统一的ApiGateWay 客户端
 	bkAuth := fmt.Sprintf(`{"bk_app_code": "%s", "bk_app_secret": "%s","bk_username":"%s"}`,
@@ -140,4 +124,37 @@ func GetCommonHeader(kt *kit.Kit, cfg *cc.ApiGateway) http.Header {
 	header.Set(constant.RidKey, kt.Rid)
 	header.Set(constant.TenantIDKey, kt.TenantID)
 	return header
+}
+
+// GetCommonHeaderWithoutUser get common header without bk_username
+func GetCommonHeaderWithoutUser(kt *kit.Kit, cfg *cc.ApiGateway) http.Header {
+	header := kt.Header()
+	bkAuth := fmt.Sprintf(`{"bk_app_code": "%s", "bk_app_secret": "%s"}`, cfg.AppCode, cfg.AppSecret)
+	header.Set(constant.BKGWAuthKey, bkAuth)
+	header.Set(constant.RidKey, kt.Rid)
+	return header
+}
+
+// getBkUsername get bk_username by login_name
+func getBkUsername(kt *kit.Kit, bkUserCli bkuser.Client, loginName string) (string, error) {
+	resp, err := bkUserCli.BatchLookupVirtualUser(kt, []string{loginName}, "login_name")
+	if err != nil {
+		logs.Errorf("fail to get bk_username by login_name, err: %v, login_name: %s, rid: %s", err, loginName,
+			kt.Rid)
+		return "", err
+	}
+
+	var bkUsername string
+	for _, item := range resp.Data {
+		if item.LoginName == loginName {
+			bkUsername = item.BkUsername
+			break
+		}
+	}
+
+	if bkUsername == "" {
+		logs.Errorf("login_name not found bk_username, login_name: %s, rid: %s", loginName, kt.Rid)
+		return "", fmt.Errorf("login_name not found bk_username, login_name: %s", loginName)
+	}
+	return bkUsername, nil
 }

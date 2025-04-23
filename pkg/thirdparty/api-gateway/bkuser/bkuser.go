@@ -17,11 +17,13 @@
  * to the current version of the project delivered to anyone in the future.
  */
 
-// Package itsm ...
-package itsm
+package bkuser
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"hcm/pkg/cc"
 	"hcm/pkg/criteria/constant"
@@ -34,23 +36,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// Client Itsm api.
+// Client is an api-gateway client to request bk-user.
 type Client interface {
-	// CreateTicket 创建单据。
-	CreateTicket(kt *kit.Kit, params *CreateTicketParams) (string, error)
-	// GetTicketResult 获取单据结果。
-	GetTicketResult(kt *kit.Kit, sn string) (TicketResult, error)
-	// WithdrawTicket 撤销单据。
-	WithdrawTicket(kt *kit.Kit, sn string, operator string) error
-	// VerifyToken 校验Token。
-	VerifyToken(kt *kit.Kit, token string) (bool, error)
-	// GetTicketsByUser 获取用户的单据。
-	GetTicketsByUser(kt *kit.Kit, req *GetTicketsByUserReq) (*GetTicketsByUserRespData, error)
-	// Approve 审批单据。
-	Approve(kt *kit.Kit, req *ApproveReq) error
+	BatchLookupVirtualUser(kt *kit.Kit, lookups []string, field string) (*BatchLookupVirtualUserResult, error)
 }
 
-// NewClient initialize a new itsm client
+// NewClient initialize a new bkUser client
 func NewClient(cfg *cc.ApiGateway, reg prometheus.Registerer) (Client, error) {
 	tls := &ssl.TLSConfig{
 		InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
@@ -67,28 +58,68 @@ func NewClient(cfg *cc.ApiGateway, reg prometheus.Registerer) (Client, error) {
 	c := &client.Capability{
 		Client: cli,
 		Discover: &discovery.Discovery{
-			Name:    "itsm",
+			Name:    "bkUser",
 			Servers: cfg.Endpoints,
 		},
 		MetricOpts: client.MetricOption{Register: reg},
 	}
-	restCli := rest.NewClient(c, "/v2/itsm")
-	return &itsm{
-		client: restCli,
+	restCli := rest.NewClient(c, "/api/v3")
+
+	agw := &bkUser{
 		config: cfg,
-	}, nil
+		client: restCli,
+	}
+	return agw, nil
 }
 
-// itsm is an esb client to request itsm.
-type itsm struct {
+var _ Client = (*bkUser)(nil)
+
+// bkUser is an api-gateway client to request bkUser.
+type bkUser struct {
 	config *cc.ApiGateway
 	// http client instance
 	client rest.ClientInterface
 }
 
-func (i *itsm) header(kt *kit.Kit) http.Header {
-	header := http.Header{}
+// BatchLookupVirtualUser ...
+func (c *bkUser) BatchLookupVirtualUser(kt *kit.Kit, lookups []string, field string) (*BatchLookupVirtualUserResult,
+	error) {
+
+	if len(lookups) <= 0 || field == "" {
+		return nil, errors.New("lookups or field is empty")
+	}
+	params := map[string]string{
+		"lookups":      strings.Join(lookups, ","),
+		"lookup_field": field,
+	}
+
+	resp := new(BatchLookupVirtualUserResult)
+
+	header := GetCommonHeaderWithoutUser(kt, c.config)
+	err := c.client.Get().
+		WithContext(kt.Ctx).
+		SubResourcef("/open/tenant/virtual-users/-/lookup/").
+		WithHeaders(header).
+		WithParams(params).
+		Do().
+		Into(resp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resp == nil {
+		return nil, errors.New("response is nil")
+	}
+
+	return resp, nil
+}
+
+// GetCommonHeaderWithoutUser get common header without bk_username
+func GetCommonHeaderWithoutUser(kt *kit.Kit, cfg *cc.ApiGateway) http.Header {
+	header := kt.Header()
+	bkAuth := fmt.Sprintf(`{"bk_app_code": "%s", "bk_app_secret": "%s"}`, cfg.AppCode, cfg.AppSecret)
+	header.Set(constant.BKGWAuthKey, bkAuth)
 	header.Set(constant.RidKey, kt.Rid)
-	header.Set(constant.BKGWAuthKey, i.config.GetAuthValue())
 	return header
 }

@@ -27,6 +27,7 @@ import (
 	"hcm/pkg/rest"
 	"hcm/pkg/rest/client"
 	apigateway "hcm/pkg/thirdparty/api-gateway"
+	"hcm/pkg/thirdparty/api-gateway/discovery"
 	"hcm/pkg/tools/ssl"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -59,7 +60,7 @@ func NewClient(cfg *cc.ApiGateway, reg prometheus.Registerer) (Client, error) {
 
 	c := &client.Capability{
 		Client: cli,
-		Discover: &apigateway.Discovery{
+		Discover: &discovery.Discovery{
 			Name:    "login",
 			Servers: cfg.Endpoints,
 		},
@@ -73,7 +74,7 @@ func NewClient(cfg *cc.ApiGateway, reg prometheus.Registerer) (Client, error) {
 
 // VerifyToken verify user token
 func (l *login) VerifyToken(kt *kit.Kit, token string) (*VerifyTokenRes, error) {
-	header := apigateway.GetCommonHeader(kt, l.config)
+	header := apigateway.GetCommonHeaderWithoutUser(kt, l.config)
 	resp := new(BkLoginResponse[*VerifyTokenRes])
 
 	err := l.client.Get().
@@ -101,7 +102,7 @@ func (l *login) VerifyToken(kt *kit.Kit, token string) (*VerifyTokenRes, error) 
 
 // GetUserByToken get user info by token
 func (l *login) GetUserByToken(kt *kit.Kit, token string) (*UserInfo, error) {
-	header := apigateway.GetCommonHeader(kt, l.config)
+	header := apigateway.GetCommonHeaderWithoutUser(kt, l.config)
 	resp := new(BkLoginResponse[*UserInfo])
 
 	err := l.client.Get().

@@ -21,14 +21,15 @@
 package cmsi
 
 import (
+	"net/http"
+
 	"hcm/pkg/cc"
 	"hcm/pkg/criteria/constant"
 	"hcm/pkg/kit"
 	"hcm/pkg/rest"
 	"hcm/pkg/rest/client"
-	apigateway "hcm/pkg/thirdparty/api-gateway"
+	"hcm/pkg/thirdparty/api-gateway/discovery"
 	"hcm/pkg/tools/ssl"
-	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -54,7 +55,7 @@ func NewClient(cfg *cc.CMSI, reg prometheus.Registerer) (Client, error) {
 
 	c := &client.Capability{
 		Client: cli,
-		Discover: &apigateway.Discovery{
+		Discover: &discovery.Discovery{
 			Name:    "cmsi",
 			Servers: cfg.Endpoints,
 		},
