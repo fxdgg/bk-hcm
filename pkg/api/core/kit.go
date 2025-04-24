@@ -20,6 +20,7 @@
 package core
 
 import (
+	"hcm/pkg/cc"
 	"hcm/pkg/criteria/constant"
 	"hcm/pkg/kit"
 )
@@ -30,5 +31,17 @@ func NewBackendKit() *kit.Kit {
 	kt.User = constant.BackendOperationUserKey
 	kt.AppCode = constant.BackendOperationAppCodeKey
 
+	SetBackendTenantID(kt)
+
 	return kt
+}
+
+// SetBackendTenantID 设置后端操作的租户id
+func SetBackendTenantID(kt *kit.Kit) {
+	// todo 待dao层的代码改造合入后，需要调整这个逻辑，如果开启多租户，那么设置租户id为system，不开启则设置为default
+	if cc.WebServer().Tenant.Enabled {
+		kt.TenantID = constant.SystemTenantID
+	} else {
+		kt.TenantID = constant.DefaultTenantID
+	}
 }

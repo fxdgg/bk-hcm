@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"hcm/pkg/api/core"
-	"hcm/pkg/cc"
 	"hcm/pkg/criteria/constant"
 	"hcm/pkg/criteria/errf"
 	"hcm/pkg/kit"
@@ -96,12 +95,6 @@ func newCheckLogin(loginCli login.Client, bkLoginUrl, bkLoginCookieName string) 
 		}
 		// 校验bk_token是否有效
 		kt := core.NewBackendKit()
-		// todo 待dao层的代码改造合入后，需要调整这个逻辑，如果开启多租户，那么设置租户id为system，不开启则设置为default
-		if cc.WebServer().Tenant.Enabled {
-			kt.TenantID = constant.SystemTenantID
-		} else {
-			kt.TenantID = constant.DefaultTenantID
-		}
 		resp, err := loginCli.VerifyToken(kt, cookie.Value)
 		if err != nil {
 			logs.Errorf("verify token failed, err: %v, cookie value: %s, rid: %s", err, cookie.Value, kt.Rid)
