@@ -506,8 +506,8 @@ func TestInjectJoinTenantID_BasicQueries(t *testing.T) {
 			args:         map[string]interface{}{"id": 10},
 			tenantID:     "tenant-10",
 			enableTenant: true,
-			origin:       "select * from db1.`cvm` as cv",
-			wantReplaced: "select * from db1.`cvm` as cv WHERE cv.tenant_id = :tenant_id",
+			origin:       "select * from db1.`cvm` as cv order by cv.id",
+			wantReplaced: "select * from db1.`cvm` as cv  WHERE cv.tenant_id = :tenant_id order by cv.id",
 		},
 		{
 			name:         "带数据库名的SELECT-数据库名+表名都带引号",

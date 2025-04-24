@@ -885,8 +885,8 @@ func appendConditionToExpr(expr string, conditions []string) string {
 		}
 
 		// 在合适的位置插入 WHERE 子句
-		appendCond := " WHERE " + strings.Join(conditions, " AND ")
-		expr = expr[:insertPos] + appendCond + expr[insertPos:]
+		appendCond := "WHERE " + strings.Join(conditions, " AND ")
+		expr = strings.TrimSpace(fmt.Sprintf("%s %s %s", expr[:insertPos], appendCond, expr[insertPos:]))
 		return expr
 	}
 
