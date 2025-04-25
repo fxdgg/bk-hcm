@@ -90,5 +90,6 @@ func (i *itsm) header(kt *kit.Kit) http.Header {
 	header := http.Header{}
 	header.Set(constant.RidKey, kt.Rid)
 	header.Set(constant.BKGWAuthKey, i.config.GetAuthValue())
+	header.Set(constant.TenantIDKey, kt.TenantID)
 	return header
 }

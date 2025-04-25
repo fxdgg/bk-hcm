@@ -21,7 +21,6 @@
 package bkbase
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -41,7 +40,7 @@ import (
 
 // Client bkbase client
 type Client interface {
-	QuerySync(ctx context.Context, req *QuerySyncReq) (*QuerySyncResp, error)
+	QuerySync(kt *kit.Kit, req *QuerySyncReq) (*QuerySyncResp, error)
 }
 
 // NewClient new bkbase client.
@@ -85,14 +84,15 @@ func (h *bkbaseCli) getAuth() string {
 }
 
 // QuerySync query sync bkbase data
-func (h *bkbaseCli) QuerySync(ctx context.Context, req *QuerySyncReq) (*QuerySyncResp, error) {
+func (h *bkbaseCli) QuerySync(kt *kit.Kit, req *QuerySyncReq) (*QuerySyncResp, error) {
 	resp := new(QuerySyncResp)
 	header := http.Header{}
 	header.Set(constant.RidKey, uuid.UUID())
 	header.Set(constant.BKGWAuthKey, h.getAuth())
+	header.Set(constant.TenantIDKey, kt.TenantID)
 	err := h.client.Post().
 		SubResourcef("/queryengine/query_sync").
-		WithContext(ctx).
+		WithContext(kt.Ctx).
 		WithHeaders(header).
 		Body(req).
 		Do().Into(resp)
@@ -118,7 +118,7 @@ func QuerySql[T any](bkBaseCli Client, kt *kit.Kit, sql string) ([]T, error) {
 		Sql:        sql,
 	}
 	logs.V(3).Infof("querying BKBase, sql: \n%s\n, rid: %s", sql, kt.Rid)
-	resp, err := bkBaseCli.QuerySync(kt.Ctx, &req)
+	resp, err := bkBaseCli.QuerySync(kt, &req)
 	if err != nil {
 		logs.Errorf("fail to query bkbase, err: %v, sql: %s, rid: %s", err, sql, kt.Rid)
 		return nil, err
