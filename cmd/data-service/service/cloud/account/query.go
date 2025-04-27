@@ -175,6 +175,7 @@ func (svc *service) ListAccount(cts *rest.Contexts) (interface{}, error) {
 			PriceUnit:          account.PriceUnit,
 			Memo:               account.Memo,
 			RecycleReserveTime: account.RecycleReserveTime,
+			TenantID:           account.TenantID,
 			Revision: core.Revision{
 				Creator:   account.Creator,
 				Reviser:   account.Reviser,

@@ -40,6 +40,7 @@ type BaseAccount struct {
 	SyncStatus         string                 `json:"sync_status"`
 	SyncFailedReason   string                 `json:"sync_failed_reason"`
 	RecycleReserveTime int                    `json:"recycle_reserve_time"`
+	TenantID           string                 `json:"tenant_id"`
 	core.Revision      `json:",inline"`
 }
 

@@ -95,6 +95,7 @@ func newCheckLogin(loginCli login.Client, bkLoginUrl, bkLoginCookieName string) 
 		}
 		// 校验bk_token是否有效
 		kt := core.NewBackendKit()
+		core.SetBackendTenantID(kt)
 		resp, err := loginCli.VerifyToken(kt, cookie.Value)
 		if err != nil {
 			logs.Errorf("verify token failed, err: %v, cookie value: %s, rid: %s", err, cookie.Value, kt.Rid)

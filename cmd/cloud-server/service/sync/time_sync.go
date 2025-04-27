@@ -100,6 +100,8 @@ func allAccountSync(kt *kit.Kit, cliSet *client.ClientSet, syncer account.Vendor
 		}
 
 		for _, acc := range accounts {
+			// TODO 设置该账号的租户ID
+			kt.TenantID = acc.TenantID
 			sd := &detail.SyncDetail{
 				Kt:        kt,
 				DataCli:   cliSet.DataService(),

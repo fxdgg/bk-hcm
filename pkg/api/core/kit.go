@@ -31,8 +31,6 @@ func NewBackendKit() *kit.Kit {
 	kt.User = constant.BackendOperationUserKey
 	kt.AppCode = constant.BackendOperationAppCodeKey
 
-	SetBackendTenantID(kt)
-
 	return kt
 }
 
