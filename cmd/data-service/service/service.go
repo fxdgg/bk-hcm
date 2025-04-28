@@ -122,7 +122,7 @@ func NewService() (*Service, error) {
 		return nil, err
 	}
 
-	cmdbCfg := cc.CloudServer().Cmdb
+	cmdbCfg := cc.DataService().Cmdb
 	cmdbCli, err := cmdb.NewClient(&cmdbCfg, bkUserCli, metrics.Register())
 	if err != nil {
 		return nil, err
