@@ -152,6 +152,8 @@ func (a *accountSvc) checkGetAccountPermission(cts *rest.Contexts, accountID str
 // 补充回收详情，转换回收时间
 func accountDetailFullFill[T protocloud.AccountExtensionGetResp](svc *accountSvc, cts *rest.Contexts,
 	acc *protocloud.AccountGetResult[T]) (*protocloud.AccountGetResult[T], error) {
+
+	logs.Infof("accountDetailFullFill, account: %+v, rid: %s", acc, cts.Kit.Rid)
 	acc.RecycleReserveTime = convertRecycleReverseTime(acc.RecycleReserveTime)
 	syncDetails, err := svc.getAccountsSyncDetail(cts, acc.ID)
 	if err != nil {
