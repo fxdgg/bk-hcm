@@ -105,6 +105,7 @@ func (svc *service) GetAccount(cts *rest.Contexts) (interface{}, error) {
 		Memo:               dbAccount.Memo,
 		BkBizIDs:           bizIDs,
 		RecycleReserveTime: dbAccount.RecycleReserveTime,
+		TenantID:           dbAccount.TenantID,
 		Revision: core.Revision{
 			Creator:   dbAccount.Creator,
 			Reviser:   dbAccount.Reviser,

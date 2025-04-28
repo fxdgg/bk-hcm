@@ -36,6 +36,7 @@ import (
 	"hcm/pkg/iam/meta"
 	"hcm/pkg/logs"
 	"hcm/pkg/rest"
+	cvt "hcm/pkg/tools/converter"
 	"hcm/pkg/tools/slice"
 )
 
@@ -153,7 +154,7 @@ func (a *accountSvc) checkGetAccountPermission(cts *rest.Contexts, accountID str
 func accountDetailFullFill[T protocloud.AccountExtensionGetResp](svc *accountSvc, cts *rest.Contexts,
 	acc *protocloud.AccountGetResult[T]) (*protocloud.AccountGetResult[T], error) {
 
-	logs.Infof("accountDetailFullFill, account: %+v, rid: %s", acc, cts.Kit.Rid)
+	logs.Infof("accountDetailFullFill, account: %+v, accountCvt: %+v, rid: %s", acc, cvt.PtrToVal(acc), cts.Kit.Rid)
 	acc.RecycleReserveTime = convertRecycleReverseTime(acc.RecycleReserveTime)
 	syncDetails, err := svc.getAccountsSyncDetail(cts, acc.ID)
 	if err != nil {
