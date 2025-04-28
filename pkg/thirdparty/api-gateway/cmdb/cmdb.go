@@ -22,6 +22,7 @@ package cmdb
 import (
 	"hcm/pkg/cc"
 	"hcm/pkg/kit"
+	"hcm/pkg/logs"
 	"hcm/pkg/rest"
 	"hcm/pkg/rest/client"
 	apigateway "hcm/pkg/thirdparty/api-gateway"
@@ -108,6 +109,7 @@ func (c *cmdbApiGateWay) AddCloudHostToBiz(kt *kit.Kit, params *AddCloudHostToBi
 	if err != nil {
 		return nil, err
 	}
+	logs.Infof("[%s] add cmdb cloud hosts, req: %+v, rid: %s", params, kt.Rid)
 	return apigateway.ApiGatewayCall[AddCloudHostToBizParams, BatchCreateResult](c.client, c.bkUserCli, c.config,
 		rest.POST, kt, params, "/createmany/cloud_hosts")
 }
