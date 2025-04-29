@@ -29,6 +29,7 @@ import (
 	"hcm/pkg/cc"
 	"hcm/pkg/criteria/constant"
 	"hcm/pkg/criteria/enumor"
+	"hcm/pkg/logs"
 	"hcm/pkg/tools/converter"
 	"hcm/pkg/tools/rand"
 	"hcm/pkg/tools/uuid"
@@ -152,6 +153,7 @@ func (kt *Kit) Validate() error {
 	}
 
 	// 多租户开关打开时再校验租户ID
+	logs.Infof("DEBUG:Kit:Validate, tenantEnable: %v, tenantID: %s, rid: %s", cc.TenantEnable(), kt.TenantID, kt.Rid)
 	if cc.TenantEnable() && len(kt.TenantID) == 0 {
 		return errors.New("tenant id is required")
 	}
