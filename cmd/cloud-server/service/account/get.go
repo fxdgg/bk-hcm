@@ -59,6 +59,8 @@ func (a *accountSvc) GetAccount(cts *rest.Contexts) (interface{}, error) {
 	switch baseInfo.Vendor {
 	case enumor.TCloud:
 		account, err := a.client.DataService().TCloud.Account.Get(cts.Kit.Ctx, cts.Kit.Header(), accountID)
+		logs.Infof("DEBUG:cloudserver:GetAccount:62, accountID: %s, tenantID: %s, account: %+v, err: %+v, rid: %s",
+			accountID, cts.Kit.TenantID, account, err, cts.Kit.Rid)
 		// 敏感信息不显示，置空
 		if account != nil {
 			account.Extension.CloudSecretKey = ""

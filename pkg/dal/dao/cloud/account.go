@@ -255,6 +255,8 @@ func (a AccountDao) List(kt *kit.Kit, opt *types.ListOption) (*types.ListAccount
 	sql := fmt.Sprintf(`SELECT %s FROM %s %s %s`, cloud.AccountColumns.FieldsNamedExpr(opt.Fields),
 		table.AccountTable, whereExpr, pageExpr)
 
+	logs.Errorf("DEBUG:DAO:AccountList:258, tenantID: %s, sql: %s, whereValue: %+v, rid: %s",
+		kt.TenantID, sql, whereValue, kt.Rid)
 	details := make([]*cloud.AccountTable, 0)
 	if err = a.Orm.ModifySQLOpts(orm.NewInjectTenantIDOpt(kt.TenantID)).Do().Select(
 		kt.Ctx, &details, sql, whereValue); err != nil {

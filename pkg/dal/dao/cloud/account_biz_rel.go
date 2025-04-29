@@ -106,6 +106,8 @@ func (a AccountBizRelDao) List(kt *kit.Kit, opt *types.ListOption) (*types.ListA
 	sql := fmt.Sprintf(`SELECT %s FROM %s %s %s`, cloud.AccountBizRelColumns.FieldsNamedExpr(opt.Fields),
 		table.AccountBizRelTable, whereExpr, pageExpr)
 
+	logs.Errorf("DEBUG:DAO:AccountBizRelDaoList:109, tenantID: %s, sql: %s, whereValue: %+v, rid: %s",
+		kt.TenantID, sql, whereValue, kt.Rid)
 	details := make([]*cloud.AccountBizRelTable, 0)
 	if err = a.Orm.Do().Select(kt.Ctx, &details, sql, whereValue); err != nil {
 		return nil, err
@@ -144,9 +146,9 @@ func (a AccountBizRelDao) ListJoinAccount(kt *kit.Kit, bkBizIDs []int64) (
 
 	sql := fmt.Sprintf(`SELECT %s, %s FROM %s AS rel LEFT JOIN %s AS account ON rel.account_id = account.id 
 	WHERE rel.bk_biz_id in (:bk_biz_ids)`,
-	cloud.AccountColumns.FieldsNamedExprWithout(types.DefaultRelJoinWithoutField),
-	tools.BaseRelJoinSqlBuild("rel", "account", "id", "bk_biz_id"),
-	table.AccountBizRelTable, table.AccountTable,
+		cloud.AccountColumns.FieldsNamedExprWithout(types.DefaultRelJoinWithoutField),
+		tools.BaseRelJoinSqlBuild("rel", "account", "id", "bk_biz_id"),
+		table.AccountBizRelTable, table.AccountTable,
 	)
 
 	details := make([]*types.AccountWithBizID, 0)

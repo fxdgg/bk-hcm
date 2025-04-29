@@ -74,6 +74,8 @@ func (svc *service) GetAccount(cts *rest.Contexts) (interface{}, error) {
 	// 查询账号信息
 	dbAccount, err := getAccountFromTable(accountID, svc, cts)
 	if err != nil {
+		logs.Errorf("dataservice get account failed, tenantID: %s, vendor: %s, accountID: %s, err: %v, rid: %s",
+			cts.Kit.TenantID, vendor, accountID, err, cts.Kit.Rid)
 		return nil, err
 	}
 
@@ -85,6 +87,8 @@ func (svc *service) GetAccount(cts *rest.Contexts) (interface{}, error) {
 	}
 	relResp, err := svc.dao.AccountBizRel().List(cts.Kit, opt)
 	if err != nil {
+		logs.Errorf("dataservice get account biz rel failed, tenantID: %s, vendor: %s, accountID: %s, err: %v, rid: %s",
+			cts.Kit.TenantID, vendor, accountID, err, cts.Kit.Rid)
 		return nil, err
 	}
 	bizIDs := make([]int64, 0, len(relResp.Details))
