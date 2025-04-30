@@ -153,8 +153,9 @@ func (kt *Kit) Validate() error {
 	}
 
 	// 多租户开关打开时再校验租户ID
-	logs.Infof("DEBUG:Kit:Validate, tenantEnable: %v, tenantID: %s, rid: %s", cc.TenantEnable(), kt.TenantID, kt.Rid)
-	if cc.TenantEnable() && len(kt.TenantID) == 0 {
+	logs.Infof("DEBUG:Kit:Validate, tenantEnable: %v, tenantID: %s, appCode: %s, ktUser: %s, rid: %s",
+		cc.TenantEnable(), kt.TenantID, kt.AppCode, kt.User, kt.Rid)
+	if kt.AppCode != "hcm-web-server" && cc.TenantEnable() && len(kt.TenantID) == 0 {
 		return errors.New("tenant id is required")
 	}
 
