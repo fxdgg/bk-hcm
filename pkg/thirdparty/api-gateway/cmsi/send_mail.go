@@ -22,14 +22,15 @@ package cmsi
 
 import (
 	"fmt"
+	"hcm/pkg/rest"
 	"strings"
 
 	"hcm/pkg/kit"
 	apigateway "hcm/pkg/thirdparty/api-gateway"
 )
 
-// CmsiMail ...
-type CmsiMail struct {
+// CmsiMailParams ...
+type CmsiMailParams struct {
 	Receiver         string               `json:"receiver,omitempty"`
 	ReceiverUserName string               `json:"receiver__username,omitempty"`
 	Sender           string               `json:"sender,omitempty"`
@@ -52,30 +53,26 @@ type CmsiMailAttachment struct {
 }
 
 // SendMail ...
-func (c *cmsi) SendMail(kt *kit.Kit, req *CmsiMail) error {
+func (c *cmsi) SendMail(kt *kit.Kit, param *CmsiMailParams) error {
 	// 可以自定义发送人，未自定义则使用配置默认
-	if req.Sender == "" {
-		req.Sender = c.sender
+	if param.Sender == "" {
+		param.Sender = c.sender
 	}
 
 	// 邮件默认抄送给平台管理员
-	if req.Cc == "" && req.CcUserName == "" {
-		req.Cc = strings.Join(c.cc, ",")
+	if param.Cc == "" && param.CcUserName == "" {
+		param.Cc = strings.Join(c.cc, ",")
 	}
 
-	resp := new(apigateway.BaseResponse)
-	err := c.client.Post().
-		SubResourcef("/send_mail").
-		WithContext(kt.Ctx).
-		WithHeaders(c.header(kt)).
-		Body(req).
-		Do().Into(resp)
-	if err != nil {
-		return err
+	_, neterr, apierr := apigateway.ApiGatewayCallWithRichError[CmsiMailParams, CmsiMailResult, CmsiMailError](
+		c.client, c.config, rest.POST, kt, param, "/send_mail")
+
+	if neterr != nil {
+		return neterr
 	}
 
-	if !resp.Result || resp.Code != 0 {
-		return fmt.Errorf("send mail failed, code: %d, msg: %s", resp.Code, resp.Message)
+	if apierr != nil {
+		return fmt.Errorf("send mail failed")
 	}
 	return nil
 }

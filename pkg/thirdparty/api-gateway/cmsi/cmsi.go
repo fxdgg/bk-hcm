@@ -36,7 +36,7 @@ import (
 
 // Client cmsi client
 type Client interface {
-	SendMail(kt *kit.Kit, m *CmsiMail) (err error)
+	SendMail(kt *kit.Kit, m *CmsiMailParams) error
 }
 
 // NewClient return a new cmsi client
@@ -61,7 +61,7 @@ func NewClient(cfg *cc.CMSI, reg prometheus.Registerer) (Client, error) {
 		},
 		MetricOpts: client.MetricOption{Register: reg},
 	}
-	restCli := rest.NewClient(c, "/v2/cmsi")
+	restCli := rest.NewClient(c, "/v1")
 	return &cmsi{
 		client: restCli,
 		config: &cfg.ApiGateway,
@@ -78,6 +78,34 @@ type cmsi struct {
 	sender string
 	// cc 抄送人
 	cc []string
+}
+
+// CmsiMailResult cmsi服务成功响应的完整结构
+type CmsiMailResult struct {
+	Summary Summary                `json:"summary"`
+	Message string                 `json:"message"`
+	Details map[string]interface{} `json:"details"`
+}
+
+type Summary struct {
+	Total     int `json:"total"`     // 邮件总数
+	Succeeded int `json:"succeeded"` // 成功发送邮件数量
+	Failed    int `json:"failed"`    // 失败发送邮件数量
+}
+
+// CmsiMailError cmsi服务错误响应的完整结构
+type CmsiMailError struct {
+	Code        string              `json:"code,omitempty"`    // 错误代码，如"SEND_FAILED","CHANNEL_NOT_CONFIGURED"
+	Message     string              `json:"message,omitempty"` // 错误描述，如"send mail fail"
+	ErrorDetail CmsiMailErrorDetail `json:"data,omitempty"`    // 错误相关数据
+	Details     []interface{}       `json:"details,omitempty"` // 错误详情列表
+}
+
+// CmsiErrorData ErrorData 包含错误相关的具体数据
+type CmsiMailErrorDetail struct {
+	ChannelID   string `json:"channel_id,omitempty"`   // 渠道ID
+	TenantID    string `json:"tenant_id,omitempty"`    // 租户ID
+	ChannelType string `json:"channel_type,omitempty"` // 渠道类型，如"mail","weixin"等
 }
 
 func (i *cmsi) header(kt *kit.Kit) http.Header {

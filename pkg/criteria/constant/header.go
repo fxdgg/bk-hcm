@@ -38,7 +38,7 @@ const (
 	// BKGWJWTTokenKey is blueking api gateway jwt header key.
 	BKGWJWTTokenKey = "X-Bkapi-JWT"
 
-	// TenantIDKey is tenant id header key.
+	// TenantIDKey is tenant id header key. TODO confirm it.
 	TenantIDKey = "X-Bk-Tenant-Id"
 
 	// RequestSourceKey is blueking hcm request source header key.

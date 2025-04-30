@@ -19,6 +19,7 @@
 package apigateway
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -72,6 +73,43 @@ func ApiGatewayCall[IT any, OT any](cli rest.ClientInterface, bkUserCli bkuser.C
 		return nil, err
 	}
 	return resp.Data, nil
+}
+
+// ApiGatewayRespWithError ...
+type ApiGatewayRespWithError[T any, E any] struct {
+	Data  T `json:"data,omitempty"`
+	Error E `json:"error,omitempty"`
+}
+
+// ApiGatewayCallWithRichError call helper function for api gateway that logs richer error details
+// DT指定ApiGatewayResp中的Data dict具体结构，ET指定ApiGatewayRespWithError中的Error dict具体结构
+func ApiGatewayCallWithRichError[IT any, DT any, ET any](cli rest.ClientInterface, cfg *cc.ApiGateway,
+	method rest.VerbType, kt *kit.Kit, req *IT, url string, urlParams ...any) (ok *DT, neterr error, apierr *ET) {
+
+	header := getCommonHeader(kt, cfg)
+	resp := new(ApiGatewayRespWithError[*DT, *ET])
+
+	// Into函数本身会将基本网络错误打印出日志
+	err := cli.Verb(method).
+		SubResourcef(url, urlParams...).
+		WithContext(kt.Ctx).
+		WithHeaders(header).
+		Body(req).
+		Do().Into(resp)
+
+	if err != nil {
+		logs.Errorf("fail to call api gateway api, err: %v, url: %s, rid: %s", err, url, kt.Rid)
+		return nil, err, nil
+	}
+
+	if resp.Error != nil {
+		errjson, _ := json.MarshalIndent(resp.Error, "", "    ")
+		err := fmt.Errorf("failed to call api gateway: %s", string(errjson))
+		logs.Errorf("api gateway returns error, url: %s, err: %v, rid: %s", url, err, kt.Rid)
+		return nil, nil, resp.Error
+	}
+
+	return resp.Data, nil, nil
 }
 
 // ApiGatewayCallWithoutReq general call helper function for api gateway
