@@ -180,16 +180,16 @@ func getCloudClientSvr(sd serviced.ServiceDiscover) (*client.ClientSet, *Service
 		return nil, nil, err
 	}
 
-	cmsiCfg := cc.CloudServer().Cmsi
-	cmsiCli, err := cmsi.NewClient(&cmsiCfg, metrics.Register())
-	if err != nil {
-		logs.Errorf("failed to create cmsi client, err: %v", err)
-		return nil, nil, err
-	}
-
 	bkUserCfg := cc.CloudServer().BkUser
 	bkUserCli, err := pkgbkuser.NewClient(&bkUserCfg, metrics.Register())
 	if err != nil {
+		return nil, nil, err
+	}
+
+	cmsiCfg := cc.CloudServer().Cmsi
+	cmsiCli, err := cmsi.NewClient(&cmsiCfg, bkUserCli, metrics.Register())
+	if err != nil {
+		logs.Errorf("failed to create cmsi client, err: %v", err)
 		return nil, nil, err
 	}
 

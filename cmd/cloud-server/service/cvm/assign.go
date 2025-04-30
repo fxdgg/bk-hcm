@@ -107,7 +107,7 @@ func (svc *cvmSvc) AssignCvmToBizPreview(cts *rest.Contexts) (interface{}, error
 		return nil, err
 	}
 
-	previewMap, err := cvm.AssignPreview(cts.Kit, svc.client, req.CvmIDs)
+	previewMap, err := cvm.AssignPreview(cts.Kit, svc.cmdbCli, svc.client, req.CvmIDs)
 	if err != nil {
 		logs.Errorf("cvm assign preview failed, err: %v, cvm ids: %v, rid: %s", err, req.CvmIDs, cts.Kit.Rid)
 		return nil, err

@@ -28,6 +28,7 @@ import (
 	"hcm/pkg/kit"
 	"hcm/pkg/rest"
 	"hcm/pkg/rest/client"
+	"hcm/pkg/thirdparty/api-gateway/bkuser"
 	"hcm/pkg/thirdparty/api-gateway/discovery"
 	"hcm/pkg/tools/ssl"
 
@@ -40,7 +41,7 @@ type Client interface {
 }
 
 // NewClient return a new cmsi client
-func NewClient(cfg *cc.CMSI, reg prometheus.Registerer) (Client, error) {
+func NewClient(cfg *cc.CMSI, bkUserCli bkuser.Client, reg prometheus.Registerer) (Client, error) {
 	tls := &ssl.TLSConfig{
 		InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
 		CertFile:           cfg.TLS.CertFile,
@@ -63,10 +64,11 @@ func NewClient(cfg *cc.CMSI, reg prometheus.Registerer) (Client, error) {
 	}
 	restCli := rest.NewClient(c, "/v1")
 	return &cmsi{
-		client: restCli,
-		config: &cfg.ApiGateway,
-		sender: cfg.Sender,
-		cc:     cfg.CC,
+		client:    restCli,
+		config:    &cfg.ApiGateway,
+		sender:    cfg.Sender,
+		cc:        cfg.CC,
+		bkUserCli: bkUserCli,
 	}, nil
 }
 
@@ -77,7 +79,8 @@ type cmsi struct {
 	// email sender 需要加入白名单
 	sender string
 	// cc 抄送人
-	cc []string
+	cc        []string
+	bkUserCli bkuser.Client
 }
 
 // CmsiMailResult cmsi服务成功响应的完整结构
@@ -101,7 +104,7 @@ type CmsiMailError struct {
 	Details     []interface{}       `json:"details,omitempty"` // 错误详情列表
 }
 
-// CmsiErrorData ErrorData 包含错误相关的具体数据
+// CmsiMailErrorDetail ErrorData 包含错误相关的具体数据
 type CmsiMailErrorDetail struct {
 	ChannelID   string `json:"channel_id,omitempty"`   // 渠道ID
 	TenantID    string `json:"tenant_id,omitempty"`    // 租户ID

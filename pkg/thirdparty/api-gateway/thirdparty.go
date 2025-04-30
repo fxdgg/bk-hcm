@@ -83,10 +83,11 @@ type ApiGatewayRespWithError[T any, E any] struct {
 
 // ApiGatewayCallWithRichError call helper function for api gateway that logs richer error details
 // DT指定ApiGatewayResp中的Data dict具体结构，ET指定ApiGatewayRespWithError中的Error dict具体结构
-func ApiGatewayCallWithRichError[IT any, DT any, ET any](cli rest.ClientInterface, cfg *cc.ApiGateway,
-	method rest.VerbType, kt *kit.Kit, req *IT, url string, urlParams ...any) (ok *DT, neterr error, apierr *ET) {
+func ApiGatewayCallWithRichError[IT any, DT any, ET any](cli rest.ClientInterface, bkUserCli bkuser.Client,
+	cfg *cc.ApiGateway, method rest.VerbType, kt *kit.Kit, req *IT, url string, urlParams ...any) (
+	ok *DT, neterr error, apierr *ET) {
 
-	header := getCommonHeader(kt, cfg)
+	header := GetCommonHeader(kt, bkUserCli, cfg)
 	resp := new(ApiGatewayRespWithError[*DT, *ET])
 
 	// Into函数本身会将基本网络错误打印出日志

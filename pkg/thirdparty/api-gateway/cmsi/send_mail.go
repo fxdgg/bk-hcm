@@ -22,10 +22,10 @@ package cmsi
 
 import (
 	"fmt"
-	"hcm/pkg/rest"
 	"strings"
 
 	"hcm/pkg/kit"
+	"hcm/pkg/rest"
 	apigateway "hcm/pkg/thirdparty/api-gateway"
 )
 
@@ -65,7 +65,7 @@ func (c *cmsi) SendMail(kt *kit.Kit, param *CmsiMailParams) error {
 	}
 
 	_, neterr, apierr := apigateway.ApiGatewayCallWithRichError[CmsiMailParams, CmsiMailResult, CmsiMailError](
-		c.client, c.config, rest.POST, kt, param, "/send_mail")
+		c.client, c.bkUserCli, c.config, rest.POST, kt, param, "/send_mail")
 
 	if neterr != nil {
 		return neterr
