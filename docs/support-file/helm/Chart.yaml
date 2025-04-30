@@ -2,7 +2,7 @@ name: bk-hcm
 apiVersion: v2
 description: A full stack chart for HCM Enterprise products.
 type: application
-version: 1.0.28-tenant9
+version: 1.0.28-tenant10
 appVersion: v1.7.6
 
 dependencies:
