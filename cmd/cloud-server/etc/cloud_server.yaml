@@ -268,6 +268,10 @@ cmsi:
     # the password to decrypt the certificate.
     password:
 
+taskManagement:
+  # disable task management loop, debug purpose only
+  disable: false
+
 # defines cmdb api gateway related settings.
 cmdb:
   # endpoints is a seed list of host:port addresses of cmdb api gateway nodes.
