@@ -38,7 +38,7 @@ import (
 	"hcm/pkg/kit"
 	"hcm/pkg/logs"
 	"hcm/pkg/runtime/filter"
-	"hcm/pkg/thirdparty/esb/cmdb"
+	"hcm/pkg/thirdparty/api-gateway/cmdb"
 	"hcm/pkg/tools/converter"
 	"hcm/pkg/tools/maps"
 	"hcm/pkg/tools/slice"
@@ -274,8 +274,7 @@ func ValidateBeforeAssign(kt *kit.Kit, cli *dataservice.Client, ids []string) er
 }
 
 // AssignPreview 分配主机预览
-func AssignPreview(kt *kit.Kit, cmdbCli cmdb.Client, cli *client.ClientSet, ids []string) (
-	map[string][]PreviewCvmMatchResult, error) {
+func AssignPreview(kt *kit.Kit, cmdbCli cmdb.Client, cli *client.ClientSet, ids []string) (map[string][]PreviewCvmMatchResult, error) {
 	// 1.查询cvm信息(云实例id、云厂商、内网IP、mac地址、账号所属业务)
 	cvmInfos, err := getAssignedCvmInfo(kt, cli, ids)
 	if err != nil {
@@ -562,7 +561,7 @@ func GetAssignedHostInfoFromCC(kt *kit.Kit, cmdbCli cmdb.Client, cvmInfos []Prev
 	fields = append(fields, "bk_cloud_id")
 	listParams := &cmdb.ListHostWithoutBizParams{
 		Fields:             fields,
-		Page:               cmdb.BasePage{Sort: "bk_host_id", Start: 0, Limit: int64(core.DefaultMaxPageLimit)},
+		Page:               &cmdb.BasePage{Sort: "bk_host_id", Start: 0, Limit: int64(core.DefaultMaxPageLimit)},
 		HostPropertyFilter: &cmdb.QueryFilter{Rule: &cmdb.CombinedRule{Condition: "OR", Rules: rules}},
 	}
 	hostIDs := make([]int64, 0)

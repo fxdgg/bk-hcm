@@ -155,7 +155,7 @@ func (svc *cvmSvc) ListAssignedCvmMatchHost(cts *rest.Contexts) (interface{}, er
 	}
 	fields := []string{"bk_host_id", "bk_host_innerip", "bk_host_outerip", "bk_cloud_id", "bk_cloud_region",
 		"bk_host_name", "bk_os_name", "create_time"}
-	ccHosts, ccBizHostIDsMap, err := cvm.GetAssignedHostInfoFromCC(cts.Kit, cvmInfos, fields)
+	ccHosts, ccBizHostIDsMap, err := cvm.GetAssignedHostInfoFromCC(cts.Kit, svc.cmdbCli, cvmInfos, fields)
 	if err != nil {
 		logs.Errorf("get assign host from cc failed, err: %v, rid: %s", err, cts.Kit.Rid)
 		return nil, err
