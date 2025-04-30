@@ -204,6 +204,6 @@ func (c *cmdbApiGateWay) ListHostWithoutBiz(kt *kit.Kit, req *ListHostWithoutBiz
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return apigateway.ApiGatewayCall[ListHostWithoutBizParams, ListHostWithoutBizResult](c.client, c.config,
+	return apigateway.ApiGatewayCall[ListHostWithoutBizParams, ListHostWithoutBizResult](c.client, c.bkUserCli, c.config,
 		rest.POST, kt, req, "/hosts/list_hosts_without_app")
 }
