@@ -32,8 +32,23 @@ import (
 	"hcm/pkg/iam/meta"
 	"hcm/pkg/logs"
 	"hcm/pkg/rest"
+	"hcm/pkg/thirdparty/api-gateway/cmsi"
 	"hcm/pkg/tools/json"
 )
+
+func (a *applicationSvc) TestSendMail(cts *rest.Contexts) (interface{}, error) {
+	err := a.cmsiCli.SendMail(cts.Kit, &cmsi.CmsiMailParams{
+		Receiver:         []string{"julianjkang@tencent.com"},
+		ReceiverUserName: []string{"julianjkang"},
+		Sender:           "julianjkang@tencent.com",
+		Title:            "SendMailTest",
+		Content:          "helloworld",
+	})
+	if err != nil {
+		logs.Errorf("send mail failed, err: %s, rid: %s", err, cts.Kit.Rid)
+	}
+	return nil, err
+}
 
 // CompleteForCreateMainAccount 申请单完成流程
 func (a *applicationSvc) CompleteForCreateMainAccount(cts *rest.Contexts) (interface{}, error) {

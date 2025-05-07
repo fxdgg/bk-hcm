@@ -78,6 +78,7 @@ func InitApplicationService(c *capability.Capability, bkHcmUrl string) {
 		"/applications/types/complete_main_account", svc.CompleteForCreateMainAccount)
 	h.Add("CreateForUpdateMainAccount", "POST",
 		"/applications/types/update_main_account", svc.CreateForUpdateMainAccount)
+	h.Add("/test_my_send_mail_api", "GET", "/test_my_send_mail_api", svc.TestSendMail)
 
 	bizH := rest.NewHandler()
 	bizH.Path("/bizs/{bk_biz_id}")

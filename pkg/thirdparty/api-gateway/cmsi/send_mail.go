@@ -22,7 +22,6 @@ package cmsi
 
 import (
 	"fmt"
-	"strings"
 
 	"hcm/pkg/kit"
 	"hcm/pkg/rest"
@@ -31,13 +30,13 @@ import (
 
 // CmsiMailParams ...
 type CmsiMailParams struct {
-	Receiver         string               `json:"receiver,omitempty"`
-	ReceiverUserName string               `json:"receiver__username,omitempty"`
+	Receiver         []string             `json:"receiver,omitempty"`
+	ReceiverUserName []string             `json:"receiver__username,omitempty"`
 	Sender           string               `json:"sender,omitempty"`
 	Title            string               `json:"title"`
 	Content          string               `json:"content"`
-	Cc               string               `json:"cc,omitempty"`
-	CcUserName       string               `json:"cc__username,omitempty"`
+	Cc               []string             `json:"cc,omitempty"`
+	CcUserName       []string             `json:"cc__username,omitempty"`
 	BodyFormat       string               `json:"body_format,omitempty"`
 	IsContentBase64  bool                 `json:"is_content_base64,omitempty"`
 	Attachments      []CmsiMailAttachment `json:"attachments,omitempty"`
@@ -60,8 +59,8 @@ func (c *cmsi) SendMail(kt *kit.Kit, param *CmsiMailParams) error {
 	}
 
 	// 邮件默认抄送给平台管理员
-	if param.Cc == "" && param.CcUserName == "" {
-		param.Cc = strings.Join(c.cc, ",")
+	if len(param.Cc) == 0 && len(param.CcUserName) == 0 {
+		param.Cc = append(param.Cc, c.cc...)
 	}
 
 	_, neterr, apierr := apigateway.ApiGatewayCallWithRichError[CmsiMailParams, CmsiMailResult, CmsiMailError](
