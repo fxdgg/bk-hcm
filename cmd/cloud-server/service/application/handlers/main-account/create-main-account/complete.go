@@ -410,7 +410,7 @@ func (a *ApplicationOfCreateMainAccount) sendMail(account *dataproto.MainAccount
 	}
 
 	mail := &cmsi.CmsiMailParams{
-		Receiver: a.req.Email,
+		Receiver: []string{a.req.Email},
 		Title:    fmt.Sprintf(EmailTitleTemplate, account.Vendor.GetNameZh()),
 		Content: fmt.Sprintf(EmailContentTemplate,
 			account.Vendor.GetNameZh(),

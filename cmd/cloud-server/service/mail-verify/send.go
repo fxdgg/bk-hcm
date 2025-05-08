@@ -105,7 +105,7 @@ func (svc *MailVerifySvc) GenMailByScene(req *SendVerifyCodeReq, verifyCode stri
 	}
 
 	mail := &cmsi.CmsiMailParams{
-		Receiver: req.Mail,
+		Receiver: []string{req.Mail},
 		Title:    title,
 		Content:  content,
 	}
