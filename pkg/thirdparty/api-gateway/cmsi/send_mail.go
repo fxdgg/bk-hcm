@@ -63,14 +63,10 @@ func (c *cmsi) SendMail(kt *kit.Kit, param *CmsiMailParams) error {
 		param.Cc = append(param.Cc, c.cc...)
 	}
 
-	_, neterr, apierr := apigateway.ApiGatewayCallWithRichError[CmsiMailParams, CmsiMailResult, CmsiMailError](
+	_, err := apigateway.ApiGatewayCallWithRichError[CmsiMailParams, CmsiMailResult](
 		c.client, c.bkUserCli, c.config, rest.POST, kt, param, "/send_mail")
 
-	if neterr != nil {
-		return neterr
-	}
-
-	if apierr != nil {
+	if err != nil {
 		return fmt.Errorf("send mail failed")
 	}
 	return nil

@@ -19,17 +19,25 @@
 package apigateway
 
 import (
-	"encoding/json"
 	"fmt"
+	"hcm/pkg/thirdparty/api-gateway/bkuser"
 	"net/http"
+	"sync"
 
 	"hcm/pkg/cc"
 	"hcm/pkg/criteria/constant"
 	"hcm/pkg/kit"
 	"hcm/pkg/logs"
 	"hcm/pkg/rest"
-	"hcm/pkg/thirdparty/api-gateway/bkuser"
 )
+
+// Discovery used to third-party service discovery.
+type Discovery struct {
+	Name    string
+	Servers []string
+	index   int
+	sync.Mutex
+}
 
 // BaseResponse is esb http base response.
 type BaseResponse struct {
@@ -38,14 +46,39 @@ type BaseResponse struct {
 	Message string `json:"message"`
 }
 
+// GetServers get third-party service server host.
+func (d *Discovery) GetServers() ([]string, error) {
+	d.Lock()
+	defer d.Unlock()
+	num := len(d.Servers)
+	if num == 0 {
+		return []string{}, fmt.Errorf("there is no %s server can be used", d.Name)
+	}
+	if d.index < num-1 {
+		d.index = d.index + 1
+		return append(d.Servers[d.index-1:], d.Servers[:d.index-1]...), nil
+	}
+	d.index = 0
+	return append(d.Servers[num-1:], d.Servers[:num-1]...), nil
+}
+
 // ApiGatewayResp ...
 type ApiGatewayResp[T any] struct {
-	Result         bool   `json:"result"`
-	Code           int    `json:"code"`
-	BKErrorCode    int    `json:"bk_error_code"`
-	Message        string `json:"message"`
-	BKErrorMessage string `json:"bk_error_msg"`
-	Data           T      `json:"data"`
+	Result         bool     `json:"result"`
+	Code           int      `json:"code"`
+	BKErrorCode    int      `json:"bk_error_code"`
+	Message        string   `json:"message"`
+	BKErrorMessage string   `json:"bk_error_msg"`
+	Data           T        `json:"data"`
+	Error          ApiError `json:"error"`
+}
+
+// ApiError api错误响应的完整结构
+type ApiError struct {
+	Code    string                 `json:"code"`
+	Message string                 `json:"message"`
+	ErrData map[string]interface{} `json:"data"`
+	Details []interface{}          `json:"details"`
 }
 
 // ApiGatewayCall general call helper function for api gateway
@@ -75,42 +108,46 @@ func ApiGatewayCall[IT any, OT any](cli rest.ClientInterface, bkUserCli bkuser.C
 	return resp.Data, nil
 }
 
-// ApiGatewayRespWithError ...
-type ApiGatewayRespWithError[T any, E any] struct {
-	Data  T `json:"data,omitempty"`
-	Error E `json:"error,omitempty"`
-}
-
 // ApiGatewayCallWithRichError call helper function for api gateway that logs richer error details
-// DT指定ApiGatewayResp中的Data dict具体结构，ET指定ApiGatewayRespWithError中的Error dict具体结构
-func ApiGatewayCallWithRichError[IT any, DT any, ET any](cli rest.ClientInterface, bkUserCli bkuser.Client,
-	cfg *cc.ApiGateway, method rest.VerbType, kt *kit.Kit, req *IT, url string, urlParams ...any) (
-	ok *DT, neterr error, apierr *ET) {
+func ApiGatewayCallWithRichError[IT any, OT any](cli rest.ClientInterface, bkUserCli bkuser.Client,
+	cfg *cc.ApiGateway, method rest.VerbType, kt *kit.Kit, req *IT, url string, urlParams ...any) (*OT, error) {
 
 	header := GetCommonHeader(kt, bkUserCli, cfg)
-	resp := new(ApiGatewayRespWithError[*DT, *ET])
+	resp := new(ApiGatewayResp[*OT])
 
 	// Into函数本身会将基本网络错误打印出日志
-	err := cli.Verb(method).
+	r := cli.Verb(method).
 		SubResourcef(url, urlParams...).
 		WithContext(kt.Ctx).
 		WithHeaders(header).
 		Body(req).
-		Do().Into(resp)
+		Do()
+
+	// 基本网络错误
+	if r.Err != nil {
+		return nil, r.Err
+	}
+
+	err := r.Into(resp)
 
 	if err != nil {
+		if r.StatusCode >= 500 { // api执行错误
+			err := fmt.Errorf("failed to call api, code: %d, msg: %s, data: %v, details: %v",
+				resp.Error.Code, resp.Error.Message, resp.Error.ErrData, resp.Error.Details)
+			logs.Errorf("api returns error, url: %s, err: %v, rid: %s", url, err, kt.Rid)
+			return nil, err
+		}
 		logs.Errorf("fail to call api gateway api, err: %v, url: %s, rid: %s", err, url, kt.Rid)
-		return nil, err, nil
+		return nil, err
 	}
 
-	if resp.Error != nil {
-		errjson, _ := json.MarshalIndent(resp.Error, "", "    ")
-		err := fmt.Errorf("failed to call api gateway: %s", string(errjson))
+	if !resp.Result || resp.Code != 0 {
+		err := fmt.Errorf("failed to call api gateway, code: %d, msg: %s, bk_error_code: %d, bk_error_msg: %s",
+			resp.Code, resp.Message, resp.BKErrorCode, resp.BKErrorMessage)
 		logs.Errorf("api gateway returns error, url: %s, err: %v, rid: %s", url, err, kt.Rid)
-		return nil, nil, resp.Error
+		return nil, err
 	}
-
-	return resp.Data, nil, nil
+	return resp.Data, nil
 }
 
 // ApiGatewayCallWithoutReq general call helper function for api gateway

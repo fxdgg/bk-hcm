@@ -23,6 +23,7 @@ package cmsi
 import (
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"hcm/pkg/cc"
 	"hcm/pkg/criteria/constant"
 	"hcm/pkg/kit"
@@ -31,8 +32,6 @@ import (
 	"hcm/pkg/thirdparty/api-gateway/bkuser"
 	"hcm/pkg/thirdparty/api-gateway/discovery"
 	"hcm/pkg/tools/ssl"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Client cmsi client
@@ -94,21 +93,6 @@ type Summary struct {
 	Total     int `json:"total"`     // 邮件总数
 	Succeeded int `json:"succeeded"` // 成功发送邮件数量
 	Failed    int `json:"failed"`    // 失败发送邮件数量
-}
-
-// CmsiMailError cmsi服务错误响应的完整结构
-type CmsiMailError struct {
-	Code        string              `json:"code,omitempty"`    // 错误代码，如"SEND_FAILED","CHANNEL_NOT_CONFIGURED"
-	Message     string              `json:"message,omitempty"` // 错误描述，如"send mail fail"
-	ErrorDetail CmsiMailErrorDetail `json:"data,omitempty"`    // 错误相关数据
-	Details     []interface{}       `json:"details,omitempty"` // 错误详情列表
-}
-
-// CmsiMailErrorDetail ErrorData 包含错误相关的具体数据
-type CmsiMailErrorDetail struct {
-	ChannelID   string `json:"channel_id,omitempty"`   // 渠道ID
-	TenantID    string `json:"tenant_id,omitempty"`    // 租户ID
-	ChannelType string `json:"channel_type,omitempty"` // 渠道类型，如"mail","weixin"等
 }
 
 func (i *cmsi) header(kt *kit.Kit) http.Header {
