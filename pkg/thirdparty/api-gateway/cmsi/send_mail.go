@@ -53,11 +53,6 @@ type CmsiMailAttachment struct {
 
 // SendMail ...
 func (c *cmsi) SendMail(kt *kit.Kit, param *CmsiMailParams) error {
-	// 可以自定义发送人，未自定义则使用配置默认
-	if param.Sender == "" {
-		param.Sender = c.sender
-	}
-
 	// 邮件默认抄送给平台管理员
 	if len(param.Cc) == 0 && len(param.CcUserName) == 0 {
 		param.Cc = append(param.Cc, c.cc...)
@@ -67,7 +62,7 @@ func (c *cmsi) SendMail(kt *kit.Kit, param *CmsiMailParams) error {
 		c.client, c.bkUserCli, c.config, rest.POST, kt, param, "/send_mail")
 
 	if err != nil {
-		return fmt.Errorf("send mail failed")
+		return fmt.Errorf("send mail failed, err: %v", err)
 	}
 	return nil
 }

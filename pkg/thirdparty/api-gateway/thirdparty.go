@@ -127,16 +127,17 @@ func ApiGatewayCallWithRichError[IT any, OT any](cli rest.ClientInterface, bkUse
 	if r.Err != nil {
 		return nil, r.Err
 	}
-
 	err := r.Into(resp)
+	
+	// api执行错误
+	if r.StatusCode >= 500 {
+		err := fmt.Errorf("failed to call api, code: %d, msg: %s, data: %v, details: %v",
+			resp.Error.Code, resp.Error.Message, resp.Error.ErrData, resp.Error.Details)
+		logs.Errorf("api returns error, url: %s, err: %v, rid: %s", url, err, kt.Rid)
+		return nil, err
+	}
 
 	if err != nil {
-		if r.StatusCode >= 500 { // api执行错误
-			err := fmt.Errorf("failed to call api, code: %d, msg: %s, data: %v, details: %v",
-				resp.Error.Code, resp.Error.Message, resp.Error.ErrData, resp.Error.Details)
-			logs.Errorf("api returns error, url: %s, err: %v, rid: %s", url, err, kt.Rid)
-			return nil, err
-		}
 		logs.Errorf("fail to call api gateway api, err: %v, url: %s, rid: %s", err, url, kt.Rid)
 		return nil, err
 	}

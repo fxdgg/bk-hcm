@@ -37,13 +37,11 @@ import (
 )
 
 func (a *applicationSvc) TestSendMail(cts *rest.Contexts) (interface{}, error) {
-	err := a.cmsiCli.SendMail(cts.Kit, &cmsi.CmsiMailParams{
-		Receiver:         []string{"julianjkang@tencent.com"},
-		ReceiverUserName: []string{"julianjkang"},
-		Sender:           "julianjkang@tencent.com",
-		Title:            "SendMailTest",
-		Content:          "helloworld",
-	})
+	params := new(cmsi.CmsiMailParams)
+	if err := cts.DecodeInto(params); err != nil {
+		return nil, err
+	}
+	err := a.cmsiCli.SendMail(cts.Kit, params)
 	if err != nil {
 		logs.Errorf("send mail failed, err: %s, rid: %s", err, cts.Kit.Rid)
 	}
