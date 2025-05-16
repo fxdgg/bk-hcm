@@ -21,12 +21,15 @@ package notice
 
 import (
 	"hcm/pkg/kit"
+	"hcm/pkg/logs"
 	"hcm/pkg/rest"
 	apigateway "hcm/pkg/thirdparty/api-gateway"
 )
 
 // GetCurAnn get current announcements
 func (n *notice) GetCurAnn(kt *kit.Kit, params map[string]string) (GetCurAnnResp, error) {
+	logs.Infof("get current announcements, user: %s, tenant: %s, appCode: %s, params: %+v, rid: %s", kt.User,
+		kt.TenantID, kt.AppCode, params, kt.Rid)
 
 	resp, err := apigateway.ApiGatewayCallWithoutReq[GetCurAnnResp](n.client, n.bkUserCli, n.config, rest.GET,
 		kt, params, "/announcement/get_current_announcements")
