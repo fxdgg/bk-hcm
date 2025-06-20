@@ -31,17 +31,21 @@ import (
 	typecvm "hcm/pkg/adaptor/types/cvm"
 	networkinterface "hcm/pkg/adaptor/types/network-interface"
 	"hcm/pkg/api/core"
+	corecvm "hcm/pkg/api/core/cloud/cvm"
 	dataproto "hcm/pkg/api/data-service/cloud"
 	protocvm "hcm/pkg/api/hc-service/cvm"
 	"hcm/pkg/criteria/enumor"
 	"hcm/pkg/criteria/errf"
 	"hcm/pkg/dal/dao/tools"
+	"hcm/pkg/dal/dao/types"
 	"hcm/pkg/kit"
 	"hcm/pkg/logs"
 	"hcm/pkg/rest"
 	cvt "hcm/pkg/tools/converter"
+	"hcm/pkg/tools/slice"
 
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
+	tcvm "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm/v20170312"
 	vpc "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc/v20170312"
 )
 
@@ -56,6 +60,7 @@ func (svc *cvmSvc) initTCloudCvmService(cap *capability.Capability) {
 	h.Add("BatchDeleteTCloudCvm", http.MethodDelete, "/vendors/tcloud/cvms/batch", svc.BatchDeleteTCloudCvm)
 	h.Add("BatchResetTCloudCvmPwd", http.MethodPost, "/vendors/tcloud/cvms/batch/reset/pwd", svc.BatchResetTCloudCvmPwd)
 	h.Add("BatchResetTCloudCvm", http.MethodPost, "/vendors/tcloud/cvms/reset", svc.BatchResetTCloudCvm)
+	h.Add("QueryTCloudCvm", http.MethodPost, "/vendors/tcloud/cvms/query", svc.BatchQueryTCloudCVM)
 
 	h.Add("ListTCloudCvmNetworkInterface", http.MethodPost, "/vendors/tcloud/cvms/network_interfaces/list",
 		svc.ListTCloudCvmNetworkInterface)
@@ -63,6 +68,43 @@ func (svc *cvmSvc) initTCloudCvmService(cap *capability.Capability) {
 		svc.BatchAssociateTCloudSecurityGroup)
 
 	h.Load(cap.WebService)
+}
+
+// BatchQueryTCloudCVM 到云上查询cvm
+func (svc *cvmSvc) BatchQueryTCloudCVM(cts *rest.Contexts) (any, error) {
+	req := new(corecvm.QueryCloudCvmReq)
+	if err := cts.DecodeInto(req); err != nil {
+		return nil, errf.NewFromErr(errf.DecodeRequestFailed, err)
+	}
+
+	if err := req.Validate(); err != nil {
+		return nil, errf.NewFromErr(errf.InvalidParameter, err)
+	}
+
+	tcloudCli, err := svc.ad.TCloud(cts.Kit, req.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	cvmWithCount, err := tcloudCli.ListCvmWithCount(cts.Kit, &typecvm.ListCvmWithCountOption{
+		Region:   req.Region,
+		CloudIDs: req.CvmIDs,
+		SGIDs:    req.SGIDs,
+		Page: &adcore.TCloudPage{
+			Offset: uint64(req.Page.Start),
+			Limit:  uint64(req.Page.Limit),
+		},
+	})
+	if err != nil {
+		logs.Errorf("fail to list cvm with count, err: %v, req: %+v ,rid: %s", err, req, cts.Kit.Rid)
+		return nil, err
+	}
+
+	cmvList := slice.Map(cvmWithCount.Cvms, func(c typecvm.TCloudCvm) corecvm.Cvm[corecvm.TCloudCvmExtension] {
+		return convTCloudCvm(c, req.AccountID, req.Region)
+	})
+	return types.ListResult[corecvm.Cvm[corecvm.TCloudCvmExtension]]{Count: uint64(cvmWithCount.TotalCount),
+		Details: cmvList}, nil
 }
 
 // BatchAssociateTCloudSecurityGroup batch associate tcloud security group.
@@ -554,6 +596,65 @@ func (svc *cvmSvc) BatchDeleteTCloudCvm(cts *rest.Contexts) (interface{}, error)
 	}
 
 	return nil, nil
+}
+
+func convTCloudCvm(c typecvm.TCloudCvm, accountID, region string) corecvm.Cvm[corecvm.TCloudCvmExtension] {
+	var cloudVpcIDs, cloudSubnetIDs []string
+	if c.VirtualPrivateCloud != nil {
+		cloudVpcIDs = append(cloudVpcIDs, cvt.PtrToVal(c.VirtualPrivateCloud.VpcId))
+		cloudSubnetIDs = append(cloudSubnetIDs, cvt.PtrToVal(c.VirtualPrivateCloud.SubnetId))
+	}
+	baseCvm := corecvm.BaseCvm{
+		CloudID:              c.GetCloudID(),
+		Name:                 cvt.PtrToVal(c.InstanceName),
+		Vendor:               enumor.TCloud,
+		AccountID:            accountID,
+		Region:               region,
+		Zone:                 cvt.PtrToVal(c.Placement.Zone),
+		CloudVpcIDs:          cloudVpcIDs,
+		CloudSubnetIDs:       cloudSubnetIDs,
+		OsName:               cvt.PtrToVal(c.OsName),
+		Status:               cvt.PtrToVal(c.InstanceState),
+		PrivateIPv4Addresses: cvt.PtrToSlice(c.PrivateIpAddresses),
+		PublicIPv4Addresses:  cvt.PtrToSlice(c.PublicIpAddresses),
+		PrivateIPv6Addresses: cvt.PtrToSlice(c.IPv6Addresses),
+		MachineType:          cvt.PtrToVal(c.InstanceType),
+		CloudImageID:         cvt.PtrToVal(c.ImageId),
+		CloudCreatedTime:     cvt.PtrToVal(c.CreatedTime),
+	}
+	var internetAccessible *corecvm.TCloudInternetAccessible
+	if c.InternetAccessible != nil {
+		internetAccessible = &corecvm.TCloudInternetAccessible{
+			InternetChargeType:      c.InternetAccessible.InternetChargeType,
+			InternetMaxBandwidthOut: c.InternetAccessible.InternetMaxBandwidthOut,
+			PublicIPAssigned:        c.InternetAccessible.PublicIpAssigned,
+			CloudBandwidthPackageID: c.InternetAccessible.BandwidthPackageId,
+		}
+	}
+
+	return corecvm.Cvm[corecvm.TCloudCvmExtension]{
+		BaseCvm: baseCvm,
+		Extension: &corecvm.TCloudCvmExtension{
+			CloudSecurityGroupIDs: cvt.PtrToSlice(c.SecurityGroupIds),
+			Placement:             &corecvm.TCloudPlacement{CloudProjectID: cvt.PtrToVal(c.Placement).ProjectId},
+			InstanceChargeType:    c.InstanceChargeType,
+			Cpu:                   c.CPU,
+			Memory:                c.Memory,
+			CloudSystemDiskID:     cvt.PtrToVal(c.SystemDisk).DiskId,
+			CloudDataDiskIDs: slice.Map(c.DataDisks,
+				func(dd *tcvm.DataDisk) string { return cvt.PtrToVal(dd.DiskId) }),
+			InternetAccessible: internetAccessible,
+
+			VirtualPrivateCloud: &corecvm.TCloudVirtualPrivateCloud{
+				AsVpcGateway: c.VirtualPrivateCloud.AsVpcGateway,
+			},
+			RenewFlag:             c.RenewFlag,
+			StopChargingMode:      c.StopChargingMode,
+			UUID:                  c.Uuid,
+			IsolatedSource:        c.IsolatedSource,
+			DisableApiTermination: c.DisableApiTermination,
+		},
+	}
 }
 
 // BatchResetTCloudCvm 重装系统
